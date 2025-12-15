@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BEAT//ZERO</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="ui-layer">
+            <div id="score-display">SCORE: 0000000</div>
+            <div id="combo-display">0 COMBO</div>
+            <div id="fps-display">FPS: 60</div>
+
+            <div class="key-hint-container">
+                <!-- Will be populated or styled by lane count -->
+            </div>
+            <div id="judgment-display"></div>
+            <div id="effect-layer"></div>
+        </div>
+    </div>
+    <script type="module" src="js/script.js"></script>
+</body>
+
+</html>
