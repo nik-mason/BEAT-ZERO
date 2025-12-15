@@ -16,4 +16,4 @@ def serve_static(path):
 
 if __name__ == '__main__':
     print(f"Serving frontend from: {FRONTEND_DIR}")
-    app.run(debug=True, port=8000)
+    app.run(debug=True, port=3937)
