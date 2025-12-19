@@ -43,6 +43,15 @@ export class Timer {
         this.play(null);
     }
 
+    stop() {
+        if (this.source) {
+            this.source.stop();
+            this.source.disconnect();
+            this.source = null;
+        }
+        this.isRunning = false;
+    }
+
     // Returns current time in milliseconds
     getTime() {
         if (!this.isRunning) return 0;

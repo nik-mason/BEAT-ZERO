@@ -18,60 +18,118 @@ export class Game {
         this.noteManager = new NoteManager();
         this.judge = new Judge();
 
-        // Bind Input to Judge
+        // Initialize Lane States (Visuals)
+        this.laneStates = [
+            { pressed: false, value: 0 },
+            { pressed: false, value: 0 },
+            { pressed: false, value: 0 },
+            { pressed: false, value: 0 }
+        ];
+
+        // Bind Input to Judge & Visuals
         this.input.addClass((lane, action, time) => {
             if (action === 'down') {
-                // Visual Effect for Key Press (Beam)
+                this.laneStates[lane].pressed = true;
                 this.spawnLaneEffect(lane);
 
-                // Use Game Time
                 const gameTime = this.timer.getTime();
-                // If timer hasn't started, maybe start it on first key press? 
-                // Or just ignore.
-
                 if (this.timer.isRunning) {
                     const result = this.judge.judgeInput(lane, gameTime, this.noteManager.getNotesInLane(lane));
                     if (result) {
-                        console.log(`Hit: ${result.result}`);
                         this.spawnHitEffect(lane, result.result);
                     }
-                } else {
-                    // Start game on first key for testing
-                    // this.start();
                 }
+            } else if (action === 'up') {
+                this.laneStates[lane].pressed = false;
             }
         });
 
-        // Debug: Start automatically for now
-        this.start();
+        // Touch / Mouse Support
+        this.bindInput();
+
+        this.loop = this.loop.bind(this);
 
         this.lastTime = 0;
         this.fpsDisplay = document.getElementById('fps-display');
-
-        this.loop = this.loop.bind(this);
-        requestAnimationFrame(this.loop);
-
         console.log("Game Initialized");
     }
 
-    async start() {
+    bindInput() {
+        const handleInput = (clientX, isDown) => {
+            // Calculate Lane
+            const rect = this.canvas.getBoundingClientRect();
+            const x = clientX - rect.left;
+
+            const laneWidth = 100;
+            const totalLaneWidth = 400;
+            const centerX = this.canvas.width / 2;
+            const startX = centerX - (totalLaneWidth / 2);
+
+            if (x >= startX && x <= startX + totalLaneWidth) {
+                const laneIndex = Math.floor((x - startX) / laneWidth);
+                if (laneIndex >= 0 && laneIndex < 4) {
+                    if (isDown && !this.laneStates[laneIndex].pressed) {
+                        this.input.trigger(laneIndex, 'down', performance.now());
+                    } else if (!isDown && this.laneStates[laneIndex].pressed) {
+                        this.input.trigger(laneIndex, 'up', performance.now());
+                    }
+                }
+            }
+        };
+
+        // Mouse (PC Testing)
+        this.canvas.addEventListener('mousedown', (e) => handleInput(e.clientX, true));
+        this.canvas.addEventListener('mouseup', (e) => handleInput(e.clientX, false));
+
+        // Touch (Mobile)
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                handleInput(e.changedTouches[i].clientX, true);
+            }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                handleInput(e.changedTouches[i].clientX, false);
+            }
+        }, { passive: false });
+    }
+
+    async start(chartData) {
+        // Reset Visuals
+        this.laneStates.forEach(state => {
+            state.pressed = false;
+            state.value = 0;
+        });
+
         try {
-            // Load Chart
-            const response = await fetch('assets/chart.json');
-            const data = await response.json();
+            let data = chartData;
+            if (!data) {
+                // Load Chart fallback
+                const response = await fetch('assets/chart.json');
+                data = await response.json();
+            }
+
+            console.log("Starting Song:", data.name || "Unknown");
 
             // Load Audio
-            const audioResponse = await fetch('assets/bgm1.mp3');
+            const audioFilename = data.filename || 'bgm1.mp3';
+            const audioResponse = await fetch(`assets/${audioFilename}`);
             const audioArrayBuffer = await audioResponse.arrayBuffer();
             const audioBuffer = await this.timer.ctx.decodeAudioData(audioArrayBuffer);
 
             console.log("Audio Loaded:", audioBuffer.duration + "s");
 
             const chart = { notes: [] };
-            let lastLane = -1;
+            // ... (rest of logic) ...
 
             // Generate notes
-            data.timestamps.forEach(time => {
+            const timestamps = data.timestamps || [];
+            let lastLane = -1;
+
+            timestamps.forEach(time => {
                 let lane;
                 do {
                     lane = Math.floor(Math.random() * 4);
@@ -91,6 +149,9 @@ export class Game {
             this.timer.play(audioBuffer);
 
             console.log(`Loaded ${chart.notes.length} notes from JSON.`);
+
+            // Start Loop
+            this.animationFrameId = requestAnimationFrame(this.loop);
         } catch (e) {
             console.error("Failed to load assets:", e);
             // Fallback to dummy data if fetch fails
@@ -126,21 +187,45 @@ export class Game {
     update(dt) {
         const currentTime = this.timer.getTime();
         this.noteManager.update(currentTime);
+
+        // Animate Lane Keys
+        // Value 0 = Up, 1 = Down (Pressed)
+        // Use dt for smooth lerp
+        const speed = 0.02 * dt;
+        for (let i = 0; i < 4; i++) {
+            const target = this.laneStates[i].pressed ? 1 : 0;
+            // Simple approach
+            const diff = target - this.laneStates[i].value;
+            this.laneStates[i].value += diff * 0.3; // Responsive lerp
+        }
+    }
+
+    stop() {
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+        this.timer.stop();
+        // Clear notes?
+        // this.noteManager.clear(); // If needed
     }
 
     draw() {
-        this.ctx.fillStyle = "#000";
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // Clear Canvas (Transparent to show CSS background)
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Current Time for rendering
         const currentTime = this.timer.getTime();
 
-        // 1. Draw Lanes
-        const laneWidth = 100;
-        const totalLaneWidth = laneWidth * 4;
+        // Optional: Darken the lane area slightly for visibility
+        const laneWidth = 100; // Hardcoded matches CONFIG
+        const totalLaneWidth = 400;
         const centerX = this.canvas.width / 2;
         const startX = centerX - (totalLaneWidth / 2);
 
+        this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; // Semi-transparent backing for lanes
+        this.ctx.fillRect(startX, 0, totalLaneWidth, this.canvas.height);
+
+        // 1. Draw Lane Lines
         this.ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
         this.ctx.lineWidth = 2;
 
@@ -152,24 +237,104 @@ export class Game {
             this.ctx.stroke();
         }
 
-        // 2. Draw Judge Line
+        // 2. Draw Judge Line (Enhanced)
         const judgeY = this.canvas.height * CONFIG.JUDGE_LINE_Y;
 
-        // Glow
-        this.ctx.shadowBlur = 20;
-        this.ctx.shadowColor = "#0ff";
+        // Dynamic Pulse
+        const time = Date.now() / 1000;
+        const pulse = 0.5 + Math.abs(Math.sin(time * 3)) * 0.5;
 
-        // Thicker Line
-        this.ctx.lineWidth = 5;
-        this.ctx.strokeStyle = "#0ff";
+        // A. Hit Area Background (Faint Glow)
+        const areaGrad = this.ctx.createLinearGradient(0, judgeY - 40, 0, judgeY + 40);
+        areaGrad.addColorStop(0, "rgba(0, 255, 255, 0)");
+        areaGrad.addColorStop(0.5, `rgba(0, 255, 255, ${0.15 * pulse})`);
+        areaGrad.addColorStop(1, "rgba(0, 255, 255, 0)");
+
+        this.ctx.fillStyle = areaGrad;
+        this.ctx.fillRect(startX - 50, judgeY - 40, totalLaneWidth + 100, 80);
+
+        // B. Main Line with Gradient
+        const lineGrad = this.ctx.createLinearGradient(startX, 0, startX + totalLaneWidth, 0);
+        lineGrad.addColorStop(0, "rgba(0, 255, 255, 0)");
+        lineGrad.addColorStop(0.2, "#0ff");
+        lineGrad.addColorStop(0.5, "#fff"); // Center hot white
+        lineGrad.addColorStop(0.8, "#0ff");
+        lineGrad.addColorStop(1, "rgba(0, 255, 255, 0)");
+
+        this.ctx.shadowBlur = 10 + (20 * pulse);
+        this.ctx.shadowColor = "#00ffff";
+        this.ctx.lineWidth = 4;
+        this.ctx.strokeStyle = lineGrad;
 
         this.ctx.beginPath();
-        this.ctx.moveTo(startX, judgeY);
-        this.ctx.lineTo(startX + totalLaneWidth, judgeY);
+        this.ctx.moveTo(startX - 20, judgeY); // Extend slightly
+        this.ctx.lineTo(startX + totalLaneWidth + 20, judgeY);
         this.ctx.stroke();
 
-        this.ctx.shadowBlur = 0;
-        this.ctx.lineWidth = 2; // Reset
+        this.ctx.shadowBlur = 0; // Reset for details
+
+        // C. Lane Markers (Tech Details)
+        this.ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+        for (let i = 0; i <= 4; i++) {
+            const lx = startX + (i * laneWidth);
+
+            // Tech Brackets
+            this.ctx.fillRect(lx - 2, judgeY - 15, 4, 30);
+
+            // Glowing dots
+            this.ctx.beginPath();
+            this.ctx.arc(lx, judgeY, 4, 0, Math.PI * 2);
+            this.ctx.fillStyle = "#fff";
+            this.ctx.fill();
+        }
+
+        // D. Key Input Visuals (Below Judge Line)
+        for (let i = 0; i < 4; i++) {
+            const laneX = startX + (i * laneWidth);
+            const val = this.laneStates[i].value; // 0 to 1
+
+            const keyHeight = 150;
+            const baseY = judgeY + 10;
+
+            // "Press" offset - moves down by 20px when pressed
+            const pressOffset = val * 20;
+
+            // Color Interpolation (Cyan to White)
+            // Pressed = Hot White, Idle = Dark Transparent Cyan
+            const r = 0 + (val * 255);
+            const g = 255;
+            const b = 255;
+            const alpha = 0.2 + (val * 0.6); // 0.2 -> 0.8
+
+            const cx = laneX + 5;
+            const cy = baseY + pressOffset;
+            const cw = laneWidth - 10;
+            const ch = keyHeight;
+
+            // 1. Key Body Gradient
+            const grad = this.ctx.createLinearGradient(cx, cy, cx, cy + ch);
+            grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${alpha})`);
+            grad.addColorStop(1, "rgba(0, 0, 0, 0)"); // Fade out at bottom
+
+            this.ctx.fillStyle = grad;
+            this.ctx.fillRect(cx, cy, cw, ch);
+
+            // 2. Top Edge (The "Physical" Key Top)
+            this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.8 + (val * 0.2)})`;
+            this.ctx.fillRect(cx, cy, cw, 5); // Thin bright line at top
+
+            // 3. Side Bevels (3D feel)
+            this.ctx.beginPath();
+            this.ctx.moveTo(cx, cy);
+            this.ctx.lineTo(cx, cy + ch); // Left side
+            this.ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 * (1 - val)})`;
+            this.ctx.stroke();
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(cx + cw, cy);
+            this.ctx.lineTo(cx + cw, cy + ch); // Right side
+            this.ctx.stroke();
+        }
 
         // 3. Draw Notes
         this.noteManager.draw(this.ctx, currentTime);
@@ -227,6 +392,14 @@ export class Game {
     }
 
     spawnHitEffect(laneIndex, judgment) {
+        // Play Sound on PERFECT
+        if (judgment === 'PERFECT' && this.beatBuffer) {
+            const source = this.timer.ctx.createBufferSource();
+            source.buffer = this.beatBuffer;
+            source.connect(this.timer.ctx.destination);
+            source.start(0);
+        }
+
         // Visual Ripple on Lane
         const laneWidth = 100;
         const totalLaneWidth = 400;
@@ -267,6 +440,6 @@ export class Game {
             this.fpsDisplay.innerText = `FPS: ${Math.round(1000 / dt)}`;
         }
 
-        requestAnimationFrame(this.loop);
+        this.animationFrameId = requestAnimationFrame(this.loop);
     }
 }

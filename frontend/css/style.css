@@ -15,23 +15,61 @@ body {
     font-family: 'Outfit', sans-serif;
     user-select: none;
 
-    /* Background Grid Effect */
-    background-image:
-        linear-gradient(var(--bg-grid) 1px, transparent 1px),
-        linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
-    background-size: 50px 50px;
-    background-position: center center;
+    /* Deep Space Gradient Base */
+    background: radial-gradient(circle at center, #0a1020 0%, #000000 100%);
 
-    animation: bg-pulse 10s infinite alternate;
+    /* We will use pseudo-elements for the moving layers to avoid complex DOM */
+    position: relative;
 }
 
-@keyframes bg-pulse {
+/* 1. Moving Aurora / Nebulas */
+body::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 0, 255, 0.08) 0%, transparent 40%);
+    animation: aurora-move 20s infinite linear;
+    z-index: -2;
+    pointer-events: none;
+}
+
+/* 2. Pseudo Starfield/Grid */
+body::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 100px 100px;
+    background-position: center center;
+    mask-image: radial-gradient(circle, black 40%, transparent 100%);
+    /* Vignette */
+    -webkit-mask-image: radial-gradient(circle, black 40%, transparent 100%);
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+@keyframes aurora-move {
     0% {
-        background-color: #050505;
+        transform: rotate(0deg) translate(0, 0);
+    }
+
+    50% {
+        transform: rotate(5deg) translate(-20px, -20px);
     }
 
     100% {
-        background-color: #0a0a0e;
+        transform: rotate(0deg) translate(0, 0);
     }
 }
 
@@ -45,6 +83,34 @@ body {
     perspective: 1000px;
     /* For 3D feel */
     overflow: hidden;
+}
+
+#back-btn {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    z-index: 200;
+
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    /* Increased from 14px */
+    padding: 15px 25px;
+    /* Increased padding */
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#back-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: #fff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
 canvas {

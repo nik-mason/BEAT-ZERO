@@ -9,7 +9,7 @@ export const CONFIG = {
 
     // Mechanics
     SCROLL_SPEED: 1.0, // Multiplier (Pixels per MS potentially, or scale factor)
-    NOTE_SPEED: 1000,  // Time in MS for a note to travel from spawn to judge line
+    NOTE_SPEED: 300,  // Time in MS for a note to travel from spawn to judge line (Faster = Lower)
 
     // Visuals
     JUDGE_LINE_Y: 0.85, // 85% down the screen

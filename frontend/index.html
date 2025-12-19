@@ -6,10 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BEAT//ZERO</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/menu.css">
 </head>
 
 <body>
-    <div id="game-container">
+    <div id="main-menu">
+        <h1>BEAT//ZERO</h1>
+        <div id="song-list">
+            <!-- Song items will be injected here -->
+        </div>
+    </div>
+
+    <div id="game-container" style="display: none;">
+        <button id="back-btn">MAIN MENU</button>
         <canvas id="game-canvas"></canvas>
         <div id="ui-layer">
             <div id="score-display">SCORE: 0000000</div>
