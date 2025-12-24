@@ -7,6 +7,7 @@
     <title>BEAT//ZERO</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/result.css">
 </head>
 
 <body>
@@ -18,7 +19,7 @@
     </div>
 
     <div id="game-container" style="display: none;">
-        <button id="back-btn">MAIN MENU</button>
+        <button id="pause-btn-mobile" class="mobile-pause-btn">⏸</button>
         <canvas id="game-canvas"></canvas>
         <div id="ui-layer">
             <div id="score-display">SCORE: 0000000</div>
@@ -30,6 +31,55 @@
             </div>
             <div id="judgment-display"></div>
             <div id="effect-layer"></div>
+        </div>
+
+        <!-- Pause Menu Overlay -->
+        <div id="pause-menu" style="display: none;">
+            <div class="pause-content">
+                <h2>PAUSED</h2>
+                <button id="resume-btn" class="pause-btn">RESUME</button>
+                <button id="quit-btn" class="pause-btn">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen">
+        <div class="result-content">
+            <h1 class="result-grade" id="result-grade">S</h1>
+            <div class="result-accuracy" id="result-accuracy">100.0%</div>
+
+            <div class="result-stats">
+                <div class="result-stat-row">
+                    <span class="result-stat-label">Score</span>
+                    <span class="result-stat-value" id="result-score">0000000</span>
+                </div>
+                <div class="result-stat-row">
+                    <span class="result-stat-label">Max Combo</span>
+                    <span class="result-stat-value" id="result-max-combo">0</span>
+                </div>
+            </div>
+
+            <div class="result-judgments">
+                <div class="judgment-stat">
+                    <div class="judgment-stat-label">Perfect</div>
+                    <div class="judgment-stat-value judgment-perfect" id="result-perfect">0</div>
+                </div>
+                <div class="judgment-stat">
+                    <div class="judgment-stat-label">Great</div>
+                    <div class="judgment-stat-value judgment-great" id="result-great">0</div>
+                </div>
+                <div class="judgment-stat">
+                    <div class="judgment-stat-label">Good</div>
+                    <div class="judgment-stat-value judgment-good" id="result-good">0</div>
+                </div>
+                <div class="judgment-stat">
+                    <div class="judgment-stat-label">Miss</div>
+                    <div class="judgment-stat-value judgment-miss" id="result-miss">0</div>
+                </div>
+            </div>
+
+            <button class="result-return-btn" id="result-return-btn">Return to Menu</button>
         </div>
     </div>
     <script type="module" src="js/script.js"></script>

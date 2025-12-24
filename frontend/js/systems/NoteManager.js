@@ -47,7 +47,7 @@ export class NoteManager {
         }
     }
 
-    draw(ctx, currentTime) {
+    draw(ctx, currentTime, invisibleMode = false) {
         // Calculate lane positions (Same as Game.js - should centralize this logic)
         const centerX = ctx.canvas.width / 2;
         const totalLaneWidth = 400;
@@ -59,12 +59,21 @@ export class NoteManager {
         this.notes.forEach(note => {
             if (!note.hit && !note.missed) {
                 const laneX = this.startX + (note.lane * this.laneWidth);
-                note.draw(ctx, currentTime, laneX, judgeY);
+                note.draw(ctx, currentTime, laneX, judgeY, invisibleMode);
             }
         });
     }
 
     getNotesInLane(lane) {
         return this.notes.filter(n => n.lane === lane && !n.hit && !n.missed);
+    }
+
+    isFinished() {
+        // All notes spawned and no active notes remaining
+        return this.nextNoteIndex >= this.chartData.length && this.notes.length === 0;
+    }
+
+    getTotalNotes() {
+        return this.chartData.length;
     }
 }

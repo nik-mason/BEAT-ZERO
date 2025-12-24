@@ -12,6 +12,9 @@
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
     z-index: 100;
+
+    /* Prevent zoom from affecting layout */
+    zoom: reset;
 }
 
 #main-menu h1 {
@@ -26,6 +29,24 @@
         0 0 20px #00ffff,
         0 0 40px #00ffff;
     animation: title-pulse 2s infinite alternate;
+
+    /* Fixed size regardless of zoom */
+    min-height: 96px;
+    max-height: 96px;
+    line-height: 96px;
+
+    /* Easter Egg Discovery */
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
+
+#main-menu h1:hover {
+    transform: scale(1.05);
+    text-shadow:
+        0 0 15px #00ffff,
+        0 0 30px #00ffff,
+        0 0 60px #00ffff;
 }
 
 @keyframes title-pulse {
@@ -44,6 +65,32 @@
     gap: 20px;
     width: 60%;
     max-width: 800px;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 10px;
+
+    /* Maintain fixed dimensions */
+    min-width: 600px;
+}
+
+/* Custom Scrollbar Styling */
+#song-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+#song-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+#song-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #00ffff, #ff00ff);
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+#song-list::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #00ffff, #ff0055);
 }
 
 .song-item {
@@ -57,12 +104,19 @@
     align-items: center;
     position: relative;
     overflow: hidden;
+
+    /* Zoom-resistant properties */
+    zoom: 1;
+    transform: scale(1) !important;
+    transform-origin: center;
+    min-height: 80px;
+    max-height: 80px;
 }
 
 .song-item:hover {
     background: rgba(0, 255, 255, 0.1);
     border-color: #00ffff;
-    transform: scale(1.02);
+    transform: scale(1.02) !important;
     box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
 }
 
@@ -70,6 +124,9 @@
     margin: 0;
     font-size: 32px;
     color: #fff;
+    line-height: 38px;
+    min-height: 38px;
+    max-height: 38px;
 }
 
 .song-info p {
@@ -79,11 +136,32 @@
 }
 
 .song-difficulty {
-    font-size: 24px;
-    font-weight: bold;
-    color: #ff0055;
-    text-transform: uppercase;
-    text-shadow: 0 0 10px #ff0055;
+    font-size: 14px;
+    font-weight: 700;
+    color: #00ffff;
+    background: rgba(0, 255, 255, 0.1);
+    padding: 6px 15px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    line-height: normal;
+    min-height: auto;
+    max-height: auto;
+    white-space: nowrap;
+
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 5;
+}
+
+.song-difficulty:hover {
+    background: rgba(0, 255, 255, 0.3);
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.song-difficulty:active {
+    transform: scale(0.9);
 }
 
 .song-item::before {

@@ -51,9 +51,20 @@ export class Game {
 
         this.lastTime = 0;
         this.fpsDisplay = document.getElementById('fps-display');
+        this.isPaused = false;
+        this.songFinished = false;
+        this.songEndTime = 0;
+        this.resultShown = false;
+
+        // Easter egg: Score click counter
+        this.scoreClickCount = 0;
+        this.glitchMode = false;
+        this.easterEggSetup = false;
+        this.invisibleMode = false; // Easter Egg: Invisible Notes
+        this.feverMode = false; // Easter Egg: Fever Time
+
         console.log("Game Initialized");
     }
-
     bindInput() {
         const handleInput = (clientX, isDown) => {
             // Calculate Lane
@@ -97,12 +108,149 @@ export class Game {
         }, { passive: false });
     }
 
+    setupScoreClickEasterEgg() {
+        // Wait a bit for DOM to be fully ready
+        setTimeout(() => {
+            const scoreDisplay = document.getElementById('score-display');
+            console.log("🔍 Setting up Easter egg, scoreDisplay:", scoreDisplay);
+
+            if (scoreDisplay) {
+                // Make sure it's clickable
+                scoreDisplay.style.pointerEvents = 'auto';
+                scoreDisplay.style.cursor = 'pointer';
+                scoreDisplay.style.userSelect = 'none';
+
+                scoreDisplay.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    this.scoreClickCount++;
+                    console.log(`🎮 Score clicked: ${this.scoreClickCount}/7`);
+
+                    // Visual feedback
+                    scoreDisplay.style.transform = 'translateX(100px) scale(0.95)';
+                    setTimeout(() => {
+                        scoreDisplay.style.transform = 'translateX(100px) scale(1)';
+                    }, 100);
+
+                    if (this.scoreClickCount >= 7) {
+                        console.log("🎯 ACTIVATING GLITCH MODE!");
+                        this.activateGlitchMode();
+                        this.scoreClickCount = 0;
+                    }
+                }, true); // Use capture phase
+
+                console.log("✅ Easter egg setup complete!");
+            } else {
+                console.error("❌ Score display element not found!");
+            }
+        }, 1000); // Wait 1 second for animations to complete
+    }
+
+    activateGlitchMode() {
+        if (this.glitchMode) return;
+
+        this.glitchMode = true;
+        console.log("💥 GLITCH MODE ACTIVATED!");
+
+        const gameContainer = document.getElementById('game-container');
+
+        // Add glitch class for CSS animations
+        gameContainer.classList.add('glitch-active');
+
+        // Create noise overlay
+        const noiseOverlay = document.createElement('div');
+        noiseOverlay.id = 'noise-overlay';
+        noiseOverlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.1) 0px,
+                rgba(255, 255, 255, 0.05) 1px,
+                rgba(0, 0, 0, 0.1) 2px
+            );
+            pointer-events: none;
+            z-index: 999;
+            animation: glitch-noise 0.1s infinite;
+            mix-blend-mode: overlay;
+        `;
+        gameContainer.appendChild(noiseOverlay);
+
+        // Deactivate after 3 seconds
+        setTimeout(() => {
+            this.glitchMode = false;
+            gameContainer.classList.remove('glitch-active');
+            if (noiseOverlay.parentNode) {
+                noiseOverlay.remove();
+            }
+            console.log("✨ Glitch mode deactivated");
+        }, 3000);
+    }
+
+    playGlitchSound() {
+        if (!this.timer || !this.timer.ctx) return;
+
+        // Play multiple distorted tick sounds rapidly
+        for (let i = 0; i < 8; i++) {
+            setTimeout(() => {
+                fetch('assets/tick.mp3')
+                    .then(response => response.arrayBuffer())
+                    .then(arrayBuffer => this.timer.ctx.decodeAudioData(arrayBuffer))
+                    .then(audioBuffer => {
+                        const source = this.timer.ctx.createBufferSource();
+                        source.buffer = audioBuffer;
+
+                        // Create gain node for volume
+                        const gainNode = this.timer.ctx.createGain();
+                        gainNode.gain.value = 0.3;
+
+                        // Distort the pitch randomly
+                        source.playbackRate.value = 0.5 + Math.random() * 1.5;
+
+                        source.connect(gainNode);
+                        gainNode.connect(this.timer.ctx.destination);
+                        source.start(0);
+                    })
+                    .catch(err => console.warn("Glitch sound failed:", err));
+            }, i * 100);
+        }
+    }
+
     async start(chartData) {
-        // Reset Visuals
+        // Reset Visuals and State
         this.laneStates.forEach(state => {
             state.pressed = false;
             state.value = 0;
         });
+
+        // Reset result screen state
+        this.songFinished = false;
+        this.songEndTime = 0;
+        this.resultShown = false;
+        this.judge.reset();
+
+        // Setup Easter egg (only once)
+        if (!this.easterEggSetup) {
+            this.setupScoreClickEasterEgg();
+            this.easterEggSetup = true;
+        }
+
+        // Fever Mode Visual Toggle
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score-display');
+
+        if (this.feverMode) {
+            gameContainer.classList.add('fever-active');
+            if (scoreDisplay) scoreDisplay.classList.add('fever-pop');
+            console.log("🌈 FEVER ACTIVE: Rainbow background & Bouncing UI enabled!");
+        } else {
+            gameContainer.classList.remove('fever-active');
+            if (scoreDisplay) scoreDisplay.classList.remove('fever-pop');
+        }
 
         try {
             let data = chartData;
@@ -122,8 +270,18 @@ export class Game {
 
             console.log("Audio Loaded:", audioBuffer.duration + "s");
 
+            // Load Hit Sound (notetick.wav)
+            try {
+                const hitSoundResponse = await fetch('assets/notetick.wav');
+                const hitSoundArrayBuffer = await hitSoundResponse.arrayBuffer();
+                this.hitSoundBuffer = await this.timer.ctx.decodeAudioData(hitSoundArrayBuffer);
+                console.log("Hit Sound Loaded");
+            } catch (hitSoundError) {
+                console.warn("Failed to load hit sound:", hitSoundError);
+                this.hitSoundBuffer = null;
+            }
+
             const chart = { notes: [] };
-            // ... (rest of logic) ...
 
             // Generate notes
             const timestamps = data.timestamps || [];
@@ -177,6 +335,9 @@ export class Game {
         }
         this.noteManager.loadChart(dummyChart);
         this.timer.start();
+
+        // Ensure loop starts even in dummy mode
+        this.animationFrameId = requestAnimationFrame(this.loop);
     }
 
     resize() {
@@ -187,6 +348,19 @@ export class Game {
     update(dt) {
         const currentTime = this.timer.getTime();
         this.noteManager.update(currentTime);
+
+        // Check if song finished
+        if (!this.songFinished && this.noteManager.isFinished()) {
+            this.songFinished = true;
+            this.songEndTime = currentTime;
+            console.log("Song finished!");
+        }
+
+        // Show result screen 2 seconds after song end
+        if (this.songFinished && !this.resultShown && (currentTime - this.songEndTime) >= 2000) {
+            this.resultShown = true;
+            this.showResultScreen();
+        }
 
         // Animate Lane Keys
         // Value 0 = Up, 1 = Down (Pressed)
@@ -207,6 +381,70 @@ export class Game {
         this.timer.stop();
         // Clear notes?
         // this.noteManager.clear(); // If needed
+    }
+
+    showResultScreen() {
+        const totalNotes = this.noteManager.getTotalNotes();
+        const grade = this.judge.calculateGrade(totalNotes);
+        const accuracy = this.judge.getAccuracy(totalNotes);
+
+        console.log(`Result: Grade ${grade}, Accuracy ${accuracy}%`);
+
+        // Update result screen UI
+        const resultScreen = document.getElementById('result-screen');
+        const gradeEl = document.getElementById('result-grade');
+        const accuracyEl = document.getElementById('result-accuracy');
+        const scoreEl = document.getElementById('result-score');
+        const maxComboEl = document.getElementById('result-max-combo');
+        const perfectEl = document.getElementById('result-perfect');
+        const greatEl = document.getElementById('result-great');
+        const goodEl = document.getElementById('result-good');
+        const missEl = document.getElementById('result-miss');
+
+        // Set grade with appropriate class
+        gradeEl.textContent = grade;
+        gradeEl.className = `result-grade grade-${grade.toLowerCase()}`;
+
+        // Set stats
+        accuracyEl.textContent = `${accuracy}%`;
+        scoreEl.textContent = this.judge.stats.score.toString().padStart(7, '0');
+        maxComboEl.textContent = this.judge.stats.maxCombo;
+        perfectEl.textContent = this.judge.stats.perfect;
+        greatEl.textContent = this.judge.stats.great;
+        goodEl.textContent = this.judge.stats.good;
+        missEl.textContent = this.judge.stats.miss;
+
+        // Show result screen
+        resultScreen.style.display = 'flex';
+    }
+
+    pause() {
+        if (this.isPaused) return;
+        this.isPaused = true;
+
+        // Suspend audio
+        if (this.timer.ctx.state === 'running') {
+            this.timer.ctx.suspend();
+        }
+
+        // Show pause menu
+        document.getElementById('pause-menu').style.display = 'flex';
+    }
+
+    resume() {
+        if (!this.isPaused) return;
+        this.isPaused = false;
+
+        // Resume audio
+        if (this.timer.ctx.state === 'suspended') {
+            this.timer.ctx.resume();
+        }
+
+        // Hide pause menu
+        document.getElementById('pause-menu').style.display = 'none';
+
+        // Reset lastTime to prevent huge dt jump
+        this.lastTime = performance.now();
     }
 
     draw() {
@@ -337,7 +575,7 @@ export class Game {
         }
 
         // 3. Draw Notes
-        this.noteManager.draw(this.ctx, currentTime);
+        this.noteManager.draw(this.ctx, currentTime, this.invisibleMode);
     }
 
     spawnLaneEffect(laneIndex) {
@@ -392,13 +630,43 @@ export class Game {
     }
 
     spawnHitEffect(laneIndex, judgment) {
-        // Play Sound on PERFECT
-        if (judgment === 'PERFECT' && this.beatBuffer) {
+        // Hit sound disabled
+        /*
+        if (this.hitSoundBuffer) {
             const source = this.timer.ctx.createBufferSource();
-            source.buffer = this.beatBuffer;
-            source.connect(this.timer.ctx.destination);
+            source.buffer = this.hitSoundBuffer;
+
+            // Create gain node for volume control
+            const gainNode = this.timer.ctx.createGain();
+
+            // Set volume based on judgment quality
+            let volume = 0.5; // Default
+            switch (judgment) {
+                case 'PERFECT':
+                    volume = 1.0;
+                    break;
+                case 'GREAT':
+                    volume = 0.8;
+                    break;
+                case 'GOOD':
+                    volume = 0.6;
+                    break;
+                case 'NORMAL':
+                    volume = 0.4;
+                    break;
+                case 'BAD':
+                    volume = 0.3;
+                    break;
+                default:
+                    volume = 0.2;
+            }
+
+            gainNode.gain.value = volume;
+            source.connect(gainNode);
+            gainNode.connect(this.timer.ctx.destination);
             source.start(0);
         }
+        */
 
         // Visual Ripple on Lane
         const laneWidth = 100;
@@ -427,9 +695,54 @@ export class Game {
             // Clean up
             setTimeout(() => ripple.remove(), 500);
         }
+
+        // Fever Mode Impact: Shake screen on hit
+        if (this.feverMode && (judgment === 'PERFECT' || judgment === 'GREAT' || judgment === 'GOOD')) {
+            const container = document.getElementById('game-container');
+            if (container) {
+                container.classList.remove('fever-impact');
+                void container.offsetWidth; // Trigger reflow for re-animation
+                container.classList.add('fever-impact');
+            }
+
+            // MASSIVE PARTICLE EXPLOSION for Fever Mode (Optimized)
+            if (effectLayer) {
+                const particleCount = 20; // Reduced from 50 for performance
+                const colors = ['#00ffff', '#ff00ff', '#ffff00', '#ff0055', '#fff', '#00ff00'];
+
+                for (let i = 0; i < particleCount; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'lane-particle fever-particle';
+                    p.style.left = `${x}px`;
+                    p.style.top = `${y}px`;
+
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 150 + Math.random() * 400;
+                    const tx = Math.cos(angle) * speed;
+                    const ty = Math.sin(angle) * speed;
+
+                    const size = 12 + Math.random() * 18; // Still large, but fewer
+                    p.style.width = `${size}px`;
+                    p.style.height = `${size}px`;
+                    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    p.style.boxShadow = `0 0 15px ${p.style.background}`; // Simpler shadow for performance
+
+                    p.style.setProperty('--tx', `${tx}px`);
+                    p.style.setProperty('--ty', `${ty}px`);
+
+                    effectLayer.appendChild(p);
+                    setTimeout(() => p.remove(), 1200);
+                }
+            }
+        }
     }
 
     loop(timestamp) {
+        if (this.isPaused) {
+            this.animationFrameId = requestAnimationFrame(this.loop);
+            return;
+        }
+
         const dt = timestamp - this.lastTime;
         this.lastTime = timestamp;
 

@@ -1,25 +1,100 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;700;900&display=swap');
 
-:root {
-    --primary-glow: #00ffff;
-    --secondary-glow: #ff00ff;
-    --bg-dark: #050505;
-    --bg-grid: rgba(255, 255, 255, 0.03);
+html,
+body {
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    /* Deep black fallback */
 }
 
 body {
-    background-color: var(--bg-dark);
     color: #fff;
-    margin: 0;
     overflow: hidden;
     font-family: 'Outfit', sans-serif;
     user-select: none;
 
     /* Deep Space Gradient Base */
-    background: radial-gradient(circle at center, #0a1020 0%, #000000 100%);
-
-    /* We will use pseudo-elements for the moving layers to avoid complex DOM */
+    background: radial-gradient(circle at center, #0a1020 0%, #000000 100%) fixed;
     position: relative;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fever Mode Easter Egg */
+.fever-active::before {
+    animation: fever-rainbow 1s infinite linear !important;
+    filter: saturate(4) brightness(1.2);
+}
+
+/* Sharp bounce triggered on hit */
+#game-container.fever-impact {
+    animation: fever-hit-shake 0.15s cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Specific pop for the score which is NOT centered */
+#score-display.fever-pop {
+    animation: fever-score-pop 0.4s infinite alternate ease-in-out;
+}
+
+@keyframes fever-score-pop {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+
+    100% {
+        transform: scale(1.15);
+        filter: brightness(2);
+    }
+}
+
+/* Combo display centered pop */
+@keyframes fever-ui-pop {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        filter: brightness(1);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1.15);
+        filter: brightness(2);
+    }
+}
+
+.fever-active #combo-display {
+    animation: fever-ui-pop 0.4s infinite alternate ease-in-out !important;
+}
+
+@keyframes fever-rainbow {
+    0% {
+        filter: hue-rotate(0deg) saturate(4) brightness(1.2);
+    }
+
+    100% {
+        filter: hue-rotate(360deg) saturate(4) brightness(1.2);
+    }
+}
+
+@keyframes fever-hit-shake {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.03) translateY(-5px);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Mirror Mode Easter Egg - Vertical Flip */
+body.mirror-mode {
+    transform: scaleY(-1);
+    transform-origin: 50% 50%;
 }
 
 /* 1. Moving Aurora / Nebulas */
@@ -85,32 +160,32 @@ body::after {
     overflow: hidden;
 }
 
-#back-btn {
+.mobile-pause-btn {
     position: absolute;
-    top: 50%;
-    left: 20px;
-    transform: translateY(-50%);
+    top: 20px;
+    right: 20px;
     z-index: 200;
 
+    width: 50px;
+    height: 50px;
     background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
     color: rgba(255, 255, 255, 0.8);
-    font-family: 'Outfit', sans-serif;
-    font-size: 18px;
-    /* Increased from 14px */
-    padding: 15px 25px;
-    /* Increased padding */
+    font-size: 24px;
     cursor: pointer;
     transition: all 0.2s;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-#back-btn:hover {
+.mobile-pause-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     color: #fff;
     border-color: #fff;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
 }
 
 canvas {
@@ -171,6 +246,25 @@ canvas {
     transform: translateX(100px);
     animation: slide-in-right 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     animation-delay: 0.5s;
+
+    /* Enable click events */
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.1s;
+}
+
+#score-display:hover {
+    transform: translateX(102px) scale(1.05);
+    text-shadow:
+        0 0 5px rgba(255, 255, 255, 1),
+        0 0 10px rgba(255, 255, 255, 0.8),
+        0 0 20px var(--primary-glow),
+        0 0 30px var(--primary-glow);
+}
+
+#score-display:active {
+    transform: translateX(100px) scale(0.95);
 }
 
 @keyframes slide-in-right {
@@ -482,6 +576,31 @@ canvas {
     }
 }
 
+.fever-particle {
+    animation: fever-particle-fly 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards !important;
+    border-radius: 4px !important;
+    z-index: 100;
+    will-change: transform, opacity;
+    /* Hardware acceleration */
+}
+
+@keyframes fever-particle-fly {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+        filter: brightness(2);
+    }
+
+    10% {
+        transform: translate(-50%, -50%) scale(1.5);
+    }
+
+    100% {
+        transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.2) rotate(180deg);
+        opacity: 0;
+    }
+}
+
 @keyframes press-flash {
     0% {
         opacity: 1;
@@ -492,4 +611,215 @@ canvas {
         opacity: 0;
         transform: scale(1.0);
     }
+}
+
+/* Pause Menu */
+#pause-menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.pause-content {
+    background: rgba(10, 16, 32, 0.9);
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 50px 80px;
+    text-align: center;
+    box-shadow:
+        0 0 30px rgba(0, 255, 255, 0.2),
+        inset 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.pause-content h2 {
+    font-size: 64px;
+    font-weight: 900;
+    color: #fff;
+    margin: 0 0 40px 0;
+    text-shadow:
+        0 0 10px #00ffff,
+        0 0 20px #00ffff,
+        0 0 40px #00ffff;
+    letter-spacing: 8px;
+}
+
+.pause-btn {
+    display: block;
+    width: 300px;
+    margin: 20px auto;
+    padding: 18px 40px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #fff;
+    background: rgba(0, 255, 255, 0.1);
+    border: 2px solid rgba(0, 255, 255, 0.5);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pause-btn:hover {
+    background: rgba(0, 255, 255, 0.3);
+    border-color: #00ffff;
+    box-shadow:
+        0 0 20px rgba(0, 255, 255, 0.5),
+        inset 0 0 20px rgba(0, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.pause-btn:active {
+    transform: scale(0.98);
+}
+
+/* Easter Egg: Glitch Effect */
+.glitch-active {
+    animation: glitch-shake 0.3s infinite;
+}
+
+@keyframes glitch-shake {
+
+    0%,
+    100% {
+        transform: translate(0, 0) skew(0deg);
+        filter: hue-rotate(0deg);
+    }
+
+    10% {
+        transform: translate(-5px, 2px) skew(2deg);
+        filter: hue-rotate(90deg);
+    }
+
+    20% {
+        transform: translate(3px, -3px) skew(-1deg);
+        filter: hue-rotate(180deg);
+    }
+
+    30% {
+        transform: translate(-2px, 4px) skew(1deg);
+        filter: hue-rotate(270deg);
+    }
+
+    40% {
+        transform: translate(4px, -2px) skew(-2deg);
+        filter: hue-rotate(0deg);
+    }
+
+    50% {
+        transform: translate(-3px, 3px) skew(1deg);
+        filter: hue-rotate(90deg) contrast(150%);
+    }
+
+    60% {
+        transform: translate(2px, -4px) skew(-1deg);
+        filter: hue-rotate(180deg);
+    }
+
+    70% {
+        transform: translate(-4px, 2px) skew(2deg);
+        filter: hue-rotate(270deg);
+    }
+
+    80% {
+        transform: translate(3px, 3px) skew(-2deg);
+        filter: hue-rotate(0deg);
+    }
+
+    90% {
+        transform: translate(-2px, -2px) skew(1deg);
+        filter: hue-rotate(90deg);
+    }
+}
+
+@keyframes glitch-noise {
+
+    0%,
+    100% {
+        opacity: 0.1;
+        background-position: 0 0;
+    }
+
+    10% {
+        opacity: 0.3;
+        background-position: -5px 0;
+    }
+
+    20% {
+        opacity: 0.2;
+        background-position: 5px 0;
+    }
+
+    30% {
+        opacity: 0.4;
+        background-position: -3px 0;
+    }
+
+    40% {
+        opacity: 0.15;
+        background-position: 3px 0;
+    }
+
+    50% {
+        opacity: 0.35;
+        background-position: 0 -2px;
+    }
+
+    60% {
+        opacity: 0.25;
+        background-position: 0 2px;
+    }
+
+    70% {
+        opacity: 0.3;
+        background-position: -4px 0;
+    }
+
+    80% {
+        opacity: 0.2;
+        background-position: 4px 0;
+    }
+
+    90% {
+        opacity: 0.4;
+        background-position: 0 0;
+    }
+}
+
+#score-display {
+    transition: all 0.1s;
+}
+
+#score-display:hover {
+    transform: translateX(102px) scale(1.05);
+    text-shadow:
+        0 0 5px rgba(255, 255, 255, 1),
+        0 0 10px rgba(255, 255, 255, 0.8),
+        0 0 20px var(--primary-glow),
+        0 0 30px var(--primary-glow);
+}
+
+#score-display:active {
+    transform: translateX(100px) scale(0.95);
 }

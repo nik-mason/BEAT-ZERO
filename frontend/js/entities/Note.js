@@ -18,7 +18,7 @@ export class Note {
         // Logic if needed (e.g. hold notes)
     }
 
-    draw(ctx, currentTime, laneX, judgeY) {
+    draw(ctx, currentTime, laneX, judgeY, invisibleMode = false) {
         if (this.hit) return; // Don't draw if hit
 
         // Calculate Y position
@@ -27,6 +27,23 @@ export class Note {
 
         // Don't draw if off screen (too high)
         if (y + this.height < -100) return;
+
+        // Invisible Mode Logic: Fade out as it approaches judge line
+        let opacity = 1.0;
+        if (invisibleMode) {
+            // Start fading at 40% of the screen height, invisible at judge line
+            const fadeStart = judgeY * 0.4;
+            const fadeEnd = judgeY * 0.9;
+
+            if (y > fadeStart) {
+                opacity = Math.max(0, 1 - (y - fadeStart) / (fadeEnd - fadeStart));
+            }
+        }
+
+        if (opacity <= 0) return;
+
+        ctx.save();
+        ctx.globalAlpha = opacity;
 
         // Ice Note Dimensions
         const w = this.width - 10;
@@ -38,21 +55,21 @@ export class Note {
         // Draw a fading tail behind the note
         const trailHeight = h * 2.0;
         const trailGrad = ctx.createLinearGradient(x, drawY, x, drawY - trailHeight);
-        trailGrad.addColorStop(0, "rgba(0, 255, 255, 0.3)");
+        trailGrad.addColorStop(0, `rgba(0, 255, 255, ${0.3 * opacity})`);
         trailGrad.addColorStop(1, "rgba(0, 255, 255, 0)");
 
         ctx.fillStyle = trailGrad;
         ctx.fillRect(x + 5, drawY - trailHeight, w - 10, trailHeight);
 
         // 2. Outer Glow (Intense Aura)
-        ctx.shadowBlur = 25;
+        ctx.shadowBlur = 25 * opacity;
         ctx.shadowColor = "#00ffff";
 
         // 3. Base Crystal Body
         const grad = ctx.createLinearGradient(x, drawY, x, drawY + h);
-        grad.addColorStop(0, "rgba(220, 255, 255, 0.95)");
-        grad.addColorStop(0.4, "rgba(0, 255, 255, 0.8)");
-        grad.addColorStop(1, "rgba(0, 100, 220, 0.9)");
+        grad.addColorStop(0, `rgba(220, 255, 255, ${0.95 * opacity})`);
+        grad.addColorStop(0.4, `rgba(0, 255, 255, ${0.8 * opacity})`);
+        grad.addColorStop(1, `rgba(0, 100, 220, ${0.9 * opacity})`);
 
         ctx.fillStyle = grad;
 
@@ -76,7 +93,7 @@ export class Note {
         ctx.clip(); // Clip drawing to the crystal body
 
         // Diagonal light refraction
-        ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.2 * opacity})`;
         ctx.beginPath();
         ctx.moveTo(x, drawY + h);
         ctx.lineTo(x + w, drawY);
@@ -85,26 +102,24 @@ export class Note {
         ctx.fill();
 
         // Top Highlight (Sharp)
-        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.8 * opacity})`;
         ctx.fillRect(x, drawY, w, h * 0.15);
 
         ctx.restore();
 
         // 5. Border (Sharp Edges)
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * opacity})`;
         ctx.lineWidth = 2;
         ctx.stroke();
 
         // 6. Core Spark (Center Brightness)
         ctx.fillStyle = "#fff";
-        ctx.globalAlpha = 0.8;
+        ctx.globalAlpha = 0.8 * opacity;
         ctx.beginPath();
         ctx.arc(x + w / 2, drawY + h / 2, w * 0.15, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1.0;
 
-        // Reset
-        ctx.shadowBlur = 0;
+        ctx.restore(); // Restore globalAlpha and clips
     }
 
     // Check collision/position for miss

@@ -134,4 +134,38 @@ export class Judge {
             }, 50);
         }
     }
+
+    calculateGrade(totalNotes) {
+        if (totalNotes === 0) return 'F';
+
+        // Calculate accuracy based on hits vs total
+        const totalHits = this.stats.perfect + this.stats.great + this.stats.good;
+        const accuracy = (totalHits / totalNotes) * 100;
+
+        // Determine grade
+        if (accuracy >= 95) return 'S';
+        if (accuracy >= 85) return 'A';
+        if (accuracy >= 75) return 'B';
+        if (accuracy >= 65) return 'C';
+        if (accuracy >= 50) return 'D';
+        return 'F';
+    }
+
+    getAccuracy(totalNotes) {
+        if (totalNotes === 0) return 0;
+        const totalHits = this.stats.perfect + this.stats.great + this.stats.good;
+        return ((totalHits / totalNotes) * 100).toFixed(1);
+    }
+
+    reset() {
+        this.stats = {
+            perfect: 0,
+            great: 0,
+            good: 0,
+            miss: 0,
+            combo: 0,
+            maxCombo: 0,
+            score: 0
+        };
+    }
 }
