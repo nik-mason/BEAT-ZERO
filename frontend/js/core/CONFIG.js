@@ -5,7 +5,7 @@ export const CONFIG = {
 
     // Lanes
     LANE_COUNT: 4,
-    KEYS: ['KeyF', 'KeyG', 'KeyH', 'KeyJ'], // Updated mapping
+    KEYS: JSON.parse(localStorage.getItem('beatzero_keys')) || ['KeyF', 'KeyG', 'KeyH', 'KeyJ'],
 
     // Mechanics
     SCROLL_SPEED: 1.0, // Multiplier (Pixels per MS potentially, or scale factor)

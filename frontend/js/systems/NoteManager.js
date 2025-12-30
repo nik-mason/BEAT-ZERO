@@ -13,7 +13,11 @@ export class NoteManager {
     }
 
     loadChart(chart) {
-        this.chartData = chart.notes.sort((a, b) => a.time - b.time);
+        // Deep clone notes (shallow clone of objects is enough for this use case)
+        this.chartData = [...chart.notes]
+            .map(n => ({ ...n }))
+            .sort((a, b) => a.time - b.time);
+
         this.nextNoteIndex = 0;
         this.notes = [];
         console.log(`Loaded chart with ${this.chartData.length} notes`);

@@ -5,16 +5,211 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BEAT//ZERO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700&family=Rajdhani:wght@500;700;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/menu.css">
     <link rel="stylesheet" href="css/result.css">
+    <link rel="stylesheet" href="css/settings.css">
 </head>
 
 <body>
+    <!-- Settings Toggle -->
+    <button id="hamburger-btn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Settings Sidebar/Tab -->
+    <div id="settings-tab">
+        <div class="setting-tab-item" id="open-key-settings">
+            <i>⚙️</i> Settings
+        </div>
+        <div class="setting-tab-item" id="open-login-modal">
+            <i>🛡️</i> Login
+        </div>
+        <div class="setting-tab-item" id="go-main-menu">
+            <i>🚪</i> Quit to Menu
+        </div>
+    </div>
+
+    <!-- Modals Container -->
+    <div class="settings-container">
+        <!-- Key Remapping Modal -->
+        <div id="settings-modal" class="settings-modal" style="display: none;">
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h2>Key Settings</h2>
+                    <button class="close-settings" id="close-settings-modal">&times;</button>
+                </div>
+                <div class="key-settings-grid">
+                    <div class="key-config-item">
+                        <span class="key-label">Lane 1</span>
+                        <button class="key-input-btn" data-lane="0" id="key-btn-0">D</button>
+                    </div>
+                    <div class="key-config-item">
+                        <span class="key-label">Lane 2</span>
+                        <button class="key-input-btn" data-lane="1" id="key-btn-1">F</button>
+                    </div>
+                    <div class="key-config-item">
+                        <span class="key-label">Lane 3</span>
+                        <span class="key-label">Lane 3</span>
+                        <button class="key-input-btn" data-lane="2" id="key-btn-2">J</button>
+                    </div>
+                    <div class="key-config-item">
+                        <span class="key-label">Lane 4</span>
+                        <button class="key-input-btn" data-lane="3" id="key-btn-3">K</button>
+                    </div>
+                </div>
+                <div class="settings-footer">
+                    <button class="save-settings-btn" id="save-key-settings">SAVE & CLOSE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login/Sign Up Modal -->
+        <div id="login-modal" class="settings-modal" style="display: none;">
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h2 id="login-modal-title">Login</h2>
+                    <button class="close-settings" id="close-login-modal">&times;</button>
+                </div>
+                <div class="cert-input-container">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <input type="text" id="login-username" class="cert-input" placeholder="User ID">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <input type="password" id="login-password" class="cert-input" placeholder="Password">
+                    </div>
+                    <!-- Signup specific field -->
+                    <div id="signup-confirm-group" class="form-group" style="display: none; margin-bottom: 20px;">
+                        <input type="password" id="signup-confirm-password" class="cert-input"
+                            placeholder="Confirm Password">
+                    </div>
+                    <div id="login-status-msg" class="cert-msg"></div>
+                </div>
+                <div class="settings-footer" style="flex-direction: column; gap: 15px;">
+                    <button class="save-settings-btn" id="login-submit-btn" style="width: 100%;">SIGN IN</button>
+                    <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.5);">
+                        <span id="login-toggle-text">Don't have an account?</span>
+                        <a href="#" id="login-toggle-btn"
+                            style="color: #00ffff; text-decoration: none; font-weight: bold; margin-left: 5px;">Sign
+                            Up</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
     <div id="main-menu">
         <h1>BEAT//ZERO</h1>
-        <div id="song-list">
-            <!-- Song items will be injected here -->
+
+        <!-- Top Navigation Bar -->
+        <div id="top-nav-bar" style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;">
+            <button id="nav-btn-song-select" class="nav-bar-btn active">SONG SELECT</button>
+            <button id="nav-btn-rankings" class="nav-bar-btn">RANKINGS</button>
+            <button id="nav-btn-editor" class="nav-bar-btn">EDITOR</button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="content-area" style="position: relative; width: 100%; flex: 1; overflow: hidden;">
+
+            <!-- 1. Song Select View (Default) -->
+            <div id="view-song-select" class="main-view active"
+                style="display: flex; flex-direction: column; height: 100%; align-items: center;">
+                <div id="search-container" style="width: 60%; margin: 0 auto 20px auto; position: relative;">
+                    <input type="text" id="song-search-input" placeholder="SEARCH SONGS..." style="width: 100%; padding: 15px; font-size: 18px; 
+                               background: rgba(0,0,0,0.5); border: 1px solid rgba(0,255,255,0.3); border-radius: 8px;
+                               color: #fff; text-align: center; text-transform: uppercase; letter-spacing: 2px;
+                               backdrop-filter: blur(5px);">
+                </div>
+                <div id="song-list">
+                    <!-- Song items will be injected here -->
+                </div>
+            </div>
+
+            <!-- 2. Rankings View -->
+            <div id="view-rankings" class="main-view"
+                style="display: none; height: 100%; flex-direction: column; align-items: center;">
+                <div class="settings-content"
+                    style="max-width: 800px; width: 90%; height: 100%; background: none; border: none; box-shadow: none;">
+                    <div class="settings-header" style="justify-content: center;">
+                        <h2 style="font-size: 32px; text-shadow: 0 0 10px #00ffff;">GLOBAL RANKINGS</h2>
+                    </div>
+                    <div class="rankings-filter"
+                        style="margin-bottom: 20px; position: relative; width: 100%; display: flex; justify-content: center;">
+                        <div class="rankings-filter"
+                            style="margin-bottom: 20px; position: relative; width: 100%; display: flex; justify-content: center; flex-direction: column; align-items: center;">
+                            <h3 style="margin-bottom: 15px; color: rgba(255,255,255,0.7); font-size: 14px;">SELECT TRACK
+                            </h3>
+                            <div id="ranking-song-buttons">
+                                <!-- Buttons injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <div id="rankings-list-container" class="scrollable-list"
+                        style="max-height: 60vh; overflow-y: auto; width: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- 3. Song Editor View -->
+            <div id="view-editor" class="main-view"
+                style="display: none; height: 100%; flex-direction: column; align-items: center;">
+                <div class="settings-content editor-content-panel"
+                    style="max-width: 1000px; width: 95%; height: 100%; display: flex; flex-direction: column; background: rgba(0,0,0,0.3); border: 1px solid rgba(0,255,255,0.1);">
+                    <div class="settings-header">
+                        <h2>Song Editor</h2>
+                    </div>
+
+                    <!-- List View -->
+                    <div id="song-editor-list-view" class="editor-view"
+                        style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+                        <div id="song-editor-list" class="scrollable-list"
+                            style="max-height: calc(85vh - 200px); overflow-y: auto;"></div>
+                        <button id="add-new-song-btn" class="save-settings-btn"
+                            style="margin-top: 20px; background: #ff00ff22; border: 1px solid #ff00ff; color: #ff00ff;">+
+                            ADD NEW SONG</button>
+                    </div>
+
+                    <!-- Detail Edit View -->
+                    <div id="song-editor-detail-view" class="editor-view"
+                        style="display: none; flex: 1; overflow-y: auto; padding-right: 10px;">
+                        <button id="back-to-list-btn" class="small-btn" style="margin-bottom: 20px;">← BACK TO
+                            LIST</button>
+                        <div class="edit-form">
+                            <div class="form-group"><label>SONG NAME</label><input type="text" id="edit-song-name"
+                                    class="cert-input" placeholder="Song Name"></div>
+                            <div class="form-group"><label>MP3 FILENAME</label><input type="text" id="edit-song-file"
+                                    class="cert-input" placeholder="song.mp3"></div>
+                            <div class="form-group"><label>DIFFICULTY</label>
+                                <div id="edit-diff-chips" class="diff-options-container"></div>
+                            </div>
+                            <div class="form-group"><label>TIMESTAMPS</label><textarea id="edit-song-timestamps"
+                                    class="cert-input" style="height: 200px; resize: vertical;"></textarea></div>
+                            <div class="edit-actions"
+                                style="display: flex; gap: 10px; margin-top: 20px; padding-bottom: 20px;">
+                                <button id="save-song-details" class="save-settings-btn" style="flex: 2;">APPLY
+                                    CHANGES</button>
+                                <button id="delete-song-btn" class="save-settings-btn"
+                                    style="flex: 1; background: #ff444422; border-color: #ff4444; color: #ff4444;">DELETE</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-footer"
+                        style="padding-top: 15px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <button id="save-all-songs" class="save-settings-btn" style="width: 100%;">SAVE ALL & PUSH TO
+                            SERVER</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -22,67 +217,73 @@
         <button id="pause-btn-mobile" class="mobile-pause-btn">⏸</button>
         <canvas id="game-canvas"></canvas>
         <div id="ui-layer">
-            <div id="score-display">SCORE: 0000000</div>
-            <div id="combo-display">0 COMBO</div>
-            <div id="fps-display">FPS: 60</div>
+            <div id="score-display" class="liquid-glass">SCORE: 0000000</div>
+            <div id="combo-display" class="liquid-glass">0 COMBO</div>
+            <div id="fps-display" class="liquid-glass">FPS: 60</div>
 
             <div class="key-hint-container">
-                <!-- Will be populated or styled by lane count -->
             </div>
-            <div id="judgment-display"></div>
-            <div id="effect-layer"></div>
+            <div id="judgment-display" class="liquid-glass" style="display: none;"></div>
+            <div id="effect-layer">
+                <div id="lane-effect-0" class="lane-effect-marker liquid-glass" style="display: none;">LANE 1</div>
+                <div id="lane-effect-1" class="lane-effect-marker liquid-glass" style="display: none;">LANE 2</div>
+                <div id="lane-effect-2" class="lane-effect-marker liquid-glass" style="display: none;">LANE 3</div>
+                <div id="lane-effect-3" class="lane-effect-marker liquid-glass" style="display: none;">LANE 4</div>
+            </div>
+            <div id="lane-effect-container"></div>
+
+            <!-- Pause Menu Overlay -->
+            <div id="pause-menu" style="display: none;">
+                <div class="pause-content">
+                    <h2>PAUSED</h2>
+                    <button id="resume-btn" class="pause-btn">RESUME</button>
+                    <button id="go-main-menu" class="pause-btn"
+                        style="background: rgba(255, 0, 0, 0.2); border: 1px solid red; color: red;">QUIT TO
+                        MENU</button>
+                </div>
+            </div>
         </div>
 
-        <!-- Pause Menu Overlay -->
-        <div id="pause-menu" style="display: none;">
-            <div class="pause-content">
-                <h2>PAUSED</h2>
-                <button id="resume-btn" class="pause-btn">RESUME</button>
-                <button id="quit-btn" class="pause-btn">MAIN MENU</button>
+        <!-- Result Screen -->
+        <div id="result-screen">
+            <div class="result-content">
+                <h1 class="result-grade" id="result-grade">S</h1>
+                <div class="result-accuracy" id="result-accuracy">100.0%</div>
+
+                <div class="result-stats">
+                    <div class="result-stat-row">
+                        <span class="result-stat-label">Score</span>
+                        <span class="result-stat-value" id="result-score">0000000</span>
+                    </div>
+                    <div class="result-stat-row">
+                        <span class="result-stat-label">Max Combo</span>
+                        <span class="result-stat-value" id="result-max-combo">0</span>
+                    </div>
+                </div>
+
+                <div class="result-judgments">
+                    <div class="judgment-stat">
+                        <div class="judgment-stat-label">Perfect</div>
+                        <div class="judgment-stat-value judgment-perfect" id="result-perfect">0</div>
+                    </div>
+                    <div class="judgment-stat">
+                        <div class="judgment-stat-label">Great</div>
+                        <div class="judgment-stat-value judgment-great" id="result-great">0</div>
+                    </div>
+                    <div class="judgment-stat">
+                        <div class="judgment-stat-label">Good</div>
+                        <div class="judgment-stat-value judgment-good" id="result-good">0</div>
+                    </div>
+                    <div class="judgment-stat">
+                        <div class="judgment-stat-label">Miss</div>
+                        <div class="judgment-stat-value judgment-miss" id="result-miss">0</div>
+                    </div>
+                </div>
+
+                <button class="result-return-btn" id="result-return-btn">Return to Menu</button>
             </div>
         </div>
-    </div>
-
-    <!-- Result Screen -->
-    <div id="result-screen">
-        <div class="result-content">
-            <h1 class="result-grade" id="result-grade">S</h1>
-            <div class="result-accuracy" id="result-accuracy">100.0%</div>
-
-            <div class="result-stats">
-                <div class="result-stat-row">
-                    <span class="result-stat-label">Score</span>
-                    <span class="result-stat-value" id="result-score">0000000</span>
-                </div>
-                <div class="result-stat-row">
-                    <span class="result-stat-label">Max Combo</span>
-                    <span class="result-stat-value" id="result-max-combo">0</span>
-                </div>
-            </div>
-
-            <div class="result-judgments">
-                <div class="judgment-stat">
-                    <div class="judgment-stat-label">Perfect</div>
-                    <div class="judgment-stat-value judgment-perfect" id="result-perfect">0</div>
-                </div>
-                <div class="judgment-stat">
-                    <div class="judgment-stat-label">Great</div>
-                    <div class="judgment-stat-value judgment-great" id="result-great">0</div>
-                </div>
-                <div class="judgment-stat">
-                    <div class="judgment-stat-label">Good</div>
-                    <div class="judgment-stat-value judgment-good" id="result-good">0</div>
-                </div>
-                <div class="judgment-stat">
-                    <div class="judgment-stat-label">Miss</div>
-                    <div class="judgment-stat-value judgment-miss" id="result-miss">0</div>
-                </div>
-            </div>
-
-            <button class="result-return-btn" id="result-return-btn">Return to Menu</button>
-        </div>
-    </div>
-    <script type="module" src="js/script.js"></script>
+        <script type="module" src="js/script.js"></script>
 </body>
 
-</html>
+</html>落

@@ -127,10 +127,10 @@ export class Judge {
             comboEl.innerText = `${this.stats.combo} COMBO`;
             comboEl.style.opacity = this.stats.combo > 2 ? 1 : 0;
 
-            // Pop effect
-            comboEl.style.transform = `translate(-50%, -50%) scale(1.2)`;
+            // Pop effect - Using setProperty to override CSS !important
+            comboEl.style.setProperty('transform', 'translate(-50%, -50%) scale(0.6)', 'important');
             setTimeout(() => {
-                comboEl.style.transform = `translate(-50%, -50%) scale(1.0)`;
+                comboEl.style.setProperty('transform', 'translate(-50%, -50%) scale(0.5)', 'important');
             }, 50);
         }
     }

@@ -28,21 +28,22 @@ export class Game {
 
         // Bind Input to Judge & Visuals
         this.input.addClass((lane, action, time) => {
+            // Guard: Only process if game is active and not paused
+            if (!this.timer.isRunning || this.isPaused || this.songFinished) return;
+
             if (action === 'down') {
                 this.laneStates[lane].pressed = true;
                 this.spawnLaneEffect(lane);
 
                 const gameTime = this.timer.getTime();
-                if (this.timer.isRunning) {
-                    const result = this.judge.judgeInput(lane, gameTime, this.noteManager.getNotesInLane(lane));
-                    if (result) {
-                        this.spawnHitEffect(lane, result.result);
-                    }
+                const result = this.judge.judgeInput(lane, gameTime, this.noteManager.getNotesInLane(lane));
+                if (result) {
+                    this.spawnHitEffect(lane, result.result);
                 }
             } else if (action === 'up') {
                 this.laneStates[lane].pressed = false;
             }
-        });
+        }, 'game_main_logic'); // Named handler to prevent accidental wipe
 
         // Touch / Mouse Support
         this.bindInput();
@@ -55,6 +56,8 @@ export class Game {
         this.songFinished = false;
         this.songEndTime = 0;
         this.resultShown = false;
+        this.currentSongName = '';
+        this.onSongFinish = null; // Callback for parent (script.js)
 
         // Easter egg: Score click counter
         this.scoreClickCount = 0;
@@ -64,46 +67,152 @@ export class Game {
         this.feverMode = false; // Easter Egg: Fever Time
 
         console.log("Game Initialized");
+
+        this.glitchSoundBuffer = null;
+        this.preloadResources();
+        this.setupGlobalListeners();
+    }
+
+    preloadResources() {
+        // Cache glitch sound to avoid repetitive fetches
+        fetch('assets/tick.mp3')
+            .then(response => response.arrayBuffer())
+            .then(arrayBuffer => this.timer.ctx.decodeAudioData(arrayBuffer))
+            .then(audioBuffer => {
+                this.glitchSoundBuffer = audioBuffer;
+                console.log("📦 Glitch sound cached");
+            })
+            .catch(err => console.warn("Resource preload failed:", err));
+    }
+
+    setupGlobalListeners() {
+        // 창 크기 대응
+        // window.removeEventListener('resize', this.resize); // Prevents duplicates if re-initialized
+        // window.addEventListener('resize', () => this.resize()); // Already in constructor but better here
+
+        // 7. 탭 전환 대응 (Visibility API)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (this.timer.isRunning && !this.isPaused) {
+                    this.pause(true); // Silent pause
+                }
+            }
+        });
     }
     bindInput() {
-        const handleInput = (clientX, isDown) => {
-            // Calculate Lane
+        // Track which lane each touch is currently in for slide support
+        const touchLanes = new Map();
+
+        const getLaneFromX = (clientX) => {
             const rect = this.canvas.getBoundingClientRect();
             const x = clientX - rect.left;
-
             const laneWidth = 100;
             const totalLaneWidth = 400;
             const centerX = this.canvas.width / 2;
             const startX = centerX - (totalLaneWidth / 2);
 
             if (x >= startX && x <= startX + totalLaneWidth) {
-                const laneIndex = Math.floor((x - startX) / laneWidth);
-                if (laneIndex >= 0 && laneIndex < 4) {
-                    if (isDown && !this.laneStates[laneIndex].pressed) {
-                        this.input.trigger(laneIndex, 'down', performance.now());
-                    } else if (!isDown && this.laneStates[laneIndex].pressed) {
-                        this.input.trigger(laneIndex, 'up', performance.now());
+                const lane = Math.floor((x - startX) / laneWidth);
+                return (lane >= 0 && lane < 4) ? lane : null;
+            }
+            return null;
+        };
+
+        const isLaneInAnyOtherTouch = (laneIndex, currentTouchId) => {
+            for (const [id, lane] of touchLanes.entries()) {
+                if (id !== currentTouchId && lane === laneIndex) return true;
+            }
+            return false;
+        };
+
+        // Mouse (PC Testing) - Single pointer simple logic
+        this.canvas.addEventListener('mousedown', (e) => {
+            if (!this.timer.isRunning || this.isPaused || this.songFinished) return;
+            const lane = getLaneFromX(e.clientX);
+            if (lane !== null && !this.laneStates[lane].pressed) {
+                this.input.trigger(lane, 'down', performance.now());
+            }
+        });
+        this.canvas.addEventListener('mouseup', (e) => {
+            const lane = getLaneFromX(e.clientX);
+            if (lane !== null) {
+                this.input.trigger(lane, 'up', performance.now());
+            } else {
+                // If moved out, release all just in case
+                for (let i = 0; i < 4; i++) {
+                    if (this.laneStates[i].pressed) this.input.trigger(i, 'up', performance.now());
+                }
+            }
+        });
+
+        // Touch (Mobile) - Multi-touch + Drag/Slide support
+        this.canvas.addEventListener('touchstart', (e) => {
+            if (!this.timer.isRunning || this.isPaused || this.songFinished) return;
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                const lane = getLaneFromX(touch.clientX);
+                if (lane !== null) {
+                    touchLanes.set(touch.identifier, lane);
+                    if (!this.laneStates[lane].pressed) {
+                        this.input.trigger(lane, 'down', performance.now());
                     }
                 }
             }
-        };
+        }, { passive: false });
 
-        // Mouse (PC Testing)
-        this.canvas.addEventListener('mousedown', (e) => handleInput(e.clientX, true));
-        this.canvas.addEventListener('mouseup', (e) => handleInput(e.clientX, false));
-
-        // Touch (Mobile)
-        this.canvas.addEventListener('touchstart', (e) => {
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (!this.timer.isRunning || this.isPaused || this.songFinished) return;
             e.preventDefault();
             for (let i = 0; i < e.changedTouches.length; i++) {
-                handleInput(e.changedTouches[i].clientX, true);
+                const touch = e.changedTouches[i];
+                const currentId = touch.identifier;
+                const newLane = getLaneFromX(touch.clientX);
+                const oldLane = touchLanes.get(currentId);
+
+                if (newLane !== oldLane) {
+                    // 1. Handle Release of old lane
+                    if (oldLane !== undefined && oldLane !== null) {
+                        if (!isLaneInAnyOtherTouch(oldLane, currentId)) {
+                            this.input.trigger(oldLane, 'up', performance.now());
+                        }
+                    }
+
+                    // 2. Handle Press of new lane
+                    if (newLane !== null) {
+                        touchLanes.set(currentId, newLane);
+                        if (!this.laneStates[newLane].pressed) {
+                            this.input.trigger(newLane, 'down', performance.now());
+                        }
+                    } else {
+                        touchLanes.delete(currentId);
+                    }
+                }
             }
         }, { passive: false });
 
         this.canvas.addEventListener('touchend', (e) => {
             e.preventDefault();
             for (let i = 0; i < e.changedTouches.length; i++) {
-                handleInput(e.changedTouches[i].clientX, false);
+                const touch = e.changedTouches[i];
+                const id = touch.identifier;
+                const lane = touchLanes.get(id);
+
+                if (lane !== undefined && lane !== null) {
+                    touchLanes.delete(id);
+                    if (!isLaneInAnyOtherTouch(lane, id)) {
+                        this.input.trigger(lane, 'up', performance.now());
+                    }
+                }
+            }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            // Full reset for safety on cancel
+            touchLanes.clear();
+            for (let i = 0; i < 4; i++) {
+                if (this.laneStates[i].pressed) this.input.trigger(i, 'up', performance.now());
             }
         }, { passive: false });
     }
@@ -148,90 +257,55 @@ export class Game {
     }
 
     activateGlitchMode() {
-        if (this.glitchMode) return;
-
         this.glitchMode = true;
-        console.log("💥 GLITCH MODE ACTIVATED!");
+        this.playGlitchSound();
+        const crt = document.querySelector('.crt-static');
+        if (crt) crt.style.display = 'block';
 
-        const gameContainer = document.getElementById('game-container');
-
-        // Add glitch class for CSS animations
-        gameContainer.classList.add('glitch-active');
-
-        // Create noise overlay
-        const noiseOverlay = document.createElement('div');
-        noiseOverlay.id = 'noise-overlay';
-        noiseOverlay.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 0, 0, 0.1) 0px,
-                rgba(255, 255, 255, 0.05) 1px,
-                rgba(0, 0, 0, 0.1) 2px
-            );
-            pointer-events: none;
-            z-index: 999;
-            animation: glitch-noise 0.1s infinite;
-            mix-blend-mode: overlay;
-        `;
-        gameContainer.appendChild(noiseOverlay);
-
-        // Deactivate after 3 seconds
+        // Auto-disable after some time or on stop
         setTimeout(() => {
-            this.glitchMode = false;
-            gameContainer.classList.remove('glitch-active');
-            if (noiseOverlay.parentNode) {
-                noiseOverlay.remove();
-            }
-            console.log("✨ Glitch mode deactivated");
-        }, 3000);
+            if (this.glitchMode) this.glitchMode = false;
+            if (crt) crt.style.display = 'none';
+        }, 5000);
     }
 
     playGlitchSound() {
-        if (!this.timer || !this.timer.ctx) return;
+        if (!this.timer || !this.timer.ctx || !this.glitchSoundBuffer) return;
 
-        // Play multiple distorted tick sounds rapidly
+        // Play multiple distorted sounds rapidly using cached buffer
         for (let i = 0; i < 8; i++) {
             setTimeout(() => {
-                fetch('assets/tick.mp3')
-                    .then(response => response.arrayBuffer())
-                    .then(arrayBuffer => this.timer.ctx.decodeAudioData(arrayBuffer))
-                    .then(audioBuffer => {
-                        const source = this.timer.ctx.createBufferSource();
-                        source.buffer = audioBuffer;
+                const source = this.timer.ctx.createBufferSource();
+                source.buffer = this.glitchSoundBuffer;
 
-                        // Create gain node for volume
-                        const gainNode = this.timer.ctx.createGain();
-                        gainNode.gain.value = 0.3;
+                const gainNode = this.timer.ctx.createGain();
+                gainNode.gain.value = 0.3;
+                source.playbackRate.value = 0.5 + Math.random() * 1.5;
 
-                        // Distort the pitch randomly
-                        source.playbackRate.value = 0.5 + Math.random() * 1.5;
-
-                        source.connect(gainNode);
-                        gainNode.connect(this.timer.ctx.destination);
-                        source.start(0);
-                    })
-                    .catch(err => console.warn("Glitch sound failed:", err));
+                source.connect(gainNode);
+                gainNode.connect(this.timer.ctx.destination);
+                source.start(0);
             }, i * 100);
         }
     }
 
     async start(chartData) {
-        // Reset Visuals and State
+        // 1. 상태 초기화 완벽 리셋 (20+ 버그 해결의 핵심)
+        this.songFinished = false;
+        this.resultShown = false;
+        this.isPaused = false;
+        this.scoreClickCount = 0;
+        this.glitchMode = false;
+        this.currentSongName = chartData ? (chartData.name || 'Unknown') : 'Unknown';
+
+        // Reset Judge stats
+        this.judge.reset();
+
+        // Reset Lane States
         this.laneStates.forEach(state => {
             state.pressed = false;
             state.value = 0;
         });
-
-        // Reset result screen state
-        this.songFinished = false;
-        this.songEndTime = 0;
-        this.resultShown = false;
-        this.judge.reset();
 
         // Setup Easter egg (only once)
         if (!this.easterEggSetup) {
@@ -244,13 +318,24 @@ export class Game {
         const scoreDisplay = document.getElementById('score-display');
 
         if (this.feverMode) {
-            gameContainer.classList.add('fever-active');
+            if (gameContainer) gameContainer.classList.add('fever-active');
             if (scoreDisplay) scoreDisplay.classList.add('fever-pop');
-            console.log("🌈 FEVER ACTIVE: Rainbow background & Bouncing UI enabled!");
+            console.log("🌈 FEVER ACTIVE!");
         } else {
-            gameContainer.classList.remove('fever-active');
+            if (gameContainer) gameContainer.classList.remove('fever-active');
             if (scoreDisplay) scoreDisplay.classList.remove('fever-pop');
         }
+
+        // Ensure canvas size is correct before starting
+        this.resize();
+
+        // Stop any existing loop to prevent doubling
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+
+        this.lastTime = performance.now();
 
         try {
             let data = chartData;
@@ -303,17 +388,30 @@ export class Game {
             });
 
             this.noteManager.loadChart(chart);
+
+            // Double check if we should still start (user might have quit during fetch)
+            if (this.songFinished || document.getElementById('main-menu').style.display !== 'none') {
+                console.log("🛑 Song start cancelled (Quit during load)");
+                this.stop(); // Clean up context if needed
+                return;
+            }
+
             // Play Audio & Start Timer
             this.timer.play(audioBuffer);
 
             console.log(`Loaded ${chart.notes.length} notes from JSON.`);
 
-            // Start Loop
+            // Final check and start loop (Prevent double loop)
+            if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = requestAnimationFrame(this.loop);
-        } catch (e) {
-            console.error("Failed to load assets:", e);
-            // Fallback to dummy data if fetch fails
-            this.startDummy();
+        } catch (err) {
+            console.error("Critical Game Start Error:", err);
+            // Rescue to Main Menu
+            this.stop();
+            const mm = document.getElementById('main-menu');
+            const gc = document.getElementById('game-container');
+            if (mm) mm.style.display = 'flex';
+            if (gc) gc.style.display = 'none';
         }
     }
 
@@ -379,14 +477,35 @@ export class Game {
             cancelAnimationFrame(this.animationFrameId);
         }
         this.timer.stop();
-        // Clear notes?
-        // this.noteManager.clear(); // If needed
+        this.cleanUpVisuals(); // Full Audit Fix: Reset all effects
+    }
+
+    cleanUpVisuals() {
+        // 1. Reset Fever Mode
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score-display');
+        if (gameContainer) gameContainer.classList.remove('fever-active', 'fever-impact');
+        if (scoreDisplay) scoreDisplay.classList.remove('fever-pop');
+
+        // 2. Clear Effect Layer
+        const effectLayer = document.getElementById('effect-layer');
+        if (effectLayer) effectLayer.innerHTML = '';
+
+        // 3. Reset Body Classes (Mirror, Chaos, etc.)
+        document.body.classList.remove('mirror-mode', 'chaos-active');
+        const crt = document.querySelector('.crt-static');
+        if (crt) crt.style.display = 'none';
+
+        // 4. Reset Score Display Transform
+        if (scoreDisplay) scoreDisplay.style.transform = '';
+
+        console.log("🧹 Visual effects cleaned up.");
     }
 
     showResultScreen() {
-        const totalNotes = this.noteManager.getTotalNotes();
-        const grade = this.judge.calculateGrade(totalNotes);
-        const accuracy = this.judge.getAccuracy(totalNotes);
+        const grade = totalNotes > 0 ? this.judge.calculateGrade(totalNotes) : 'F';
+        const accuracyString = totalNotes > 0 ? this.judge.getAccuracy(totalNotes) : '0.0';
+        const accuracy = parseFloat(accuracyString);
 
         console.log(`Result: Grade ${grade}, Accuracy ${accuracy}%`);
 
@@ -405,20 +524,31 @@ export class Game {
         gradeEl.textContent = grade;
         gradeEl.className = `result-grade grade-${grade.toLowerCase()}`;
 
-        // Set stats
+        // Set stats with null safety
+        const stats = this.judge.stats || {};
         accuracyEl.textContent = `${accuracy}%`;
-        scoreEl.textContent = this.judge.stats.score.toString().padStart(7, '0');
-        maxComboEl.textContent = this.judge.stats.maxCombo;
-        perfectEl.textContent = this.judge.stats.perfect;
-        greatEl.textContent = this.judge.stats.great;
-        goodEl.textContent = this.judge.stats.good;
-        missEl.textContent = this.judge.stats.miss;
+        scoreEl.textContent = (stats.score || 0).toString().padStart(7, '0');
+        maxComboEl.textContent = stats.maxCombo || 0;
+        perfectEl.textContent = stats.perfect || 0;
+        greatEl.textContent = stats.great || 0;
+        goodEl.textContent = stats.good || 0;
+        missEl.textContent = stats.miss || 0;
 
         // Show result screen
         resultScreen.style.display = 'flex';
+
+        // Trigger finish callback for ranking
+        if (this.onSongFinish) {
+            this.onSongFinish({
+                songName: this.currentSongName,
+                score: this.judge.stats.score,
+                accuracy: accuracy,
+                grade: grade
+            });
+        }
     }
 
-    pause() {
+    pause(isSilent = false) {
         if (this.isPaused) return;
         this.isPaused = true;
 
@@ -427,8 +557,10 @@ export class Game {
             this.timer.ctx.suspend();
         }
 
-        // Show pause menu
-        document.getElementById('pause-menu').style.display = 'flex';
+        // Show pause menu ONLY if not silent
+        if (!isSilent) {
+            document.getElementById('pause-menu').style.display = 'flex';
+        }
     }
 
     resume() {
@@ -499,10 +631,16 @@ export class Game {
         lineGrad.addColorStop(0.8, "#0ff");
         lineGrad.addColorStop(1, "rgba(0, 255, 255, 0)");
 
-        this.ctx.shadowBlur = 10 + (20 * pulse);
         this.ctx.shadowColor = "#00ffff";
         this.ctx.lineWidth = 4;
         this.ctx.strokeStyle = lineGrad;
+
+        // Optimization: Only apply heavy shadow blur when pulse is high
+        if (pulse > 0.8) {
+            this.ctx.shadowBlur = 10 + (20 * pulse);
+        } else {
+            this.ctx.shadowBlur = 5;
+        }
 
         this.ctx.beginPath();
         this.ctx.moveTo(startX - 20, judgeY); // Extend slightly

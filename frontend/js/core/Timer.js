@@ -5,15 +5,37 @@ export class Timer {
         this.isRunning = false;
         this.source = null;
 
-        // Handle auto-suspend policy (Chrome)
-        if (this.ctx.state === 'suspended') {
-            window.addEventListener('click', () => {
-                this.ctx.resume();
-            }, { once: true });
-            window.addEventListener('keydown', () => {
-                this.ctx.resume();
-            }, { once: true });
+        // Auto-unlock via global events (Idempotent)
+        if (!Timer._listenersAttached) {
+            const unlock = () => {
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            };
+            window.addEventListener('click', unlock, { once: true });
+            window.addEventListener('touchstart', unlock, { once: true });
+            window.addEventListener('keydown', unlock, { once: true });
+            Timer._listenersAttached = true;
         }
+    }
+    static _listenersAttached = false;
+
+    /**
+     * 명시적인 사용자 제스처 컨텍스트에서 오디오를 잠금 해제합니다.
+     * iOS Safari 대응을 위해 비동기 작업(fetch/decode) 전에 호출되어야 합니다.
+     */
+    async unlock() {
+        if (this.ctx.state === 'suspended') {
+            await this.ctx.resume();
+        }
+
+        // 아주 짧은 무음 재생으로 엔진 웜업 (iOS 대응)
+        const buffer = this.ctx.createBuffer(1, 1, 22050);
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.ctx.destination);
+        source.start(0);
+        console.log("🔊 AudioContext Unlocked & Warmed up");
     }
 
     play(buffer) {
@@ -38,8 +60,6 @@ export class Timer {
 
     start() {
         // Fallback if no audio buffer provided (manual start)
-        // This method now effectively just starts the timer without playing audio.
-        // The play(null) call ensures the context is resumed and timer variables are set.
         this.play(null);
     }
 

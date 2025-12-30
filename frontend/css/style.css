@@ -1,31 +1,86 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;700;900&display=swap');
 
+:root {
+    --primary-glow: #00ffff;
+    --secondary-glow: #ff00ff;
+    --bg-dark: #050505;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-highlight: rgba(255, 255, 255, 0.08);
+    --font-heading: 'Rajdhani', sans-serif;
+    --font-body: 'Lexend', sans-serif;
+    --liquid-bg: rgba(255, 255, 255, 0.05);
+    --liquid-border: rgba(255, 255, 255, 0.2);
+    --liquid-blur: blur(25px) saturate(180%);
+}
+
 html,
 body {
     height: 100vh;
     width: 100vw;
     margin: 0;
     padding: 0;
-    background-color: #000;
-    /* Deep black fallback */
+    background: #000;
+    overflow: hidden;
 }
 
 body {
     color: #fff;
-    overflow: hidden;
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-body);
     user-select: none;
-
-    /* Deep Space Gradient Base */
-    background: radial-gradient(circle at center, #0a1020 0%, #000000 100%) fixed;
     position: relative;
+
+    /* Deep Space Nebula Background */
+    background:
+        radial-gradient(circle at 15% 50%, rgba(0, 255, 255, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(255, 0, 255, 0.08), transparent 25%),
+        linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px) 0 0 / 50px 50px,
+        linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px) 0 0 / 50px 50px,
+        radial-gradient(circle at center, #0a1020 0%, #000000 100%);
+
+    background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px, 100% 100%;
+    animation: bg-pan 60s linear infinite;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+@keyframes bg-pan {
+    0% {
+        background-position: 0% 0%, 0% 0%, 0 0, 0 0, 0 0;
+    }
+
+    100% {
+        background-position: 100% 0%, -100% 0%, 0 500px, 500px 0, 0 0;
+    }
+}
+
 /* Fever Mode Easter Egg */
-.fever-active::before {
-    animation: fever-rainbow 1s infinite linear !important;
-    filter: saturate(4) brightness(1.2);
+.fever-active::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
+    background-size: 400% 400%;
+    animation: fever-rainbow 3s ease infinite !important;
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+@keyframes fever-rainbow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 /* Sharp bounce triggered on hit */
@@ -75,6 +130,96 @@ body {
     100% {
         filter: hue-rotate(360deg) saturate(4) brightness(1.2);
     }
+}
+
+/* Liquid Glass Design System */
+.liquid-glass {
+    background: var(--liquid-bg) !important;
+    backdrop-filter: var(--liquid-blur) !important;
+    -webkit-backdrop-filter: var(--liquid-blur) !important;
+    border: 1px solid var(--liquid-border) !important;
+    border-radius: 12px;
+    box-shadow:
+        0 8px 32px 0 rgba(0, 0, 0, 0.37),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden;
+    padding: 10px 20px !important;
+    box-sizing: border-box !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Glass Buttons */
+button {
+    background: var(--liquid-bg) !important;
+    backdrop-filter: var(--liquid-blur) !important;
+    -webkit-backdrop-filter: var(--liquid-blur) !important;
+    border: 1px solid var(--liquid-border) !important;
+    border-radius: 8px !important;
+    color: #fff !important;
+    cursor: pointer !important;
+    font-family: var(--font-heading) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    outline: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+button:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: var(--primary-glow) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3) !important;
+    transform: translateY(-2px) !important;
+}
+
+button:active {
+    transform: translateY(0) scale(0.95) !important;
+}
+
+button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+button:hover::after {
+    left: 100%;
+}
+
+.liquid-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+}
+
+/* Lane Effect Markers for Editor */
+.lane-effect-marker {
+    width: 100px;
+    height: 100px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #00ffff;
+    border-color: #00ffff !important;
+    background: rgba(0, 255, 255, 0.1) !important;
+    z-index: 100;
+}
+
+.ui-edit-mode .lane-effect-marker {
+    display: flex !important;
 }
 
 @keyframes fever-hit-shake {
@@ -148,6 +293,59 @@ body::after {
     }
 }
 
+/* CHAOS MODE - Triggered after 15s Hover */
+body.chaos-active {
+    animation: chaos-rotation 2s infinite linear;
+    filter: invert(1) hue-rotate(180deg) contrast(2);
+    background: #fff !important;
+}
+
+@keyframes chaos-rotation {
+    0% {
+        transform: scale(1) rotate(0deg);
+    }
+
+    25% {
+        transform: scale(1.2) rotate(5deg);
+    }
+
+    50% {
+        transform: scale(0.8) rotate(-5deg);
+    }
+
+    100% {
+        transform: scale(1) rotate(360deg);
+    }
+}
+
+#chaos-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #fff;
+    z-index: 9999;
+    display: none;
+    pointer-events: none;
+}
+
+.crt-static {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://media.giphy.com/media/oEI9uWU0EB9Lp9ww7v/giphy.gif');
+    /* Fallback to a high-speed noise GIF */
+    background-size: cover;
+    opacity: 0.1;
+    z-index: 9998;
+    pointer-events: none;
+    display: none;
+    mix-blend-mode: overlay;
+}
+
 #game-container {
     position: relative;
     width: 100vw;
@@ -156,8 +354,42 @@ body::after {
     justify-content: center;
     align-items: center;
     perspective: 1000px;
-    /* For 3D feel */
     overflow: hidden;
+    background: #000;
+
+    /* Premium Background Pulse */
+    animation: bg-pulse 15s infinite alternate ease-in-out;
+}
+
+@keyframes bg-pulse {
+    0% {
+        background-color: #000;
+    }
+
+    50% {
+        background-color: #050810;
+    }
+
+    100% {
+        background-color: #0a1020;
+    }
+}
+
+/* Ratio Locker for Mobile */
+@media (max-width: 768px) {
+    #game-container {
+        padding: 0;
+    }
+
+    canvas {
+        /* Maintain a "Playable Unit" feel */
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 9 / 16;
+        box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
+    }
 }
 
 .mobile-pause-btn {
@@ -231,9 +463,10 @@ canvas {
     position: absolute;
     top: 30px;
     right: 40px;
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 900;
     letter-spacing: 2px;
+    min-width: 200px;
 
     /* Neon Text Effect */
     color: #fff;
@@ -251,7 +484,7 @@ canvas {
     pointer-events: auto;
     cursor: pointer;
     user-select: none;
-    transition: all 0.1s;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #score-display:hover {
@@ -267,6 +500,83 @@ canvas {
     transform: translateX(100px) scale(0.95);
 }
 
+/* Key Indicator Overlay */
+.key-hint-container {
+    position: absolute;
+    bottom: 130px;
+    /* Positioned above the hit line area */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 10;
+    pointer-events: none;
+    /* Let clicks pass through to canvas if needed */
+}
+
+.key-hint-box {
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: uppercase;
+    transition: all 0.05s ease-out;
+    /* Super fast response */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.key-hint-box.active {
+    background: rgba(0, 255, 255, 0.2);
+    border-color: #00ffff;
+    color: #fff;
+    transform: scale(0.95);
+    box-shadow:
+        0 0 20px rgba(0, 255, 255, 0.4),
+        inset 0 0 15px rgba(0, 255, 255, 0.2);
+    text-shadow: 0 0 10px #00ffff;
+}
+
+/* Mobile Responsiveness for Game UI */
+@media (max-width: 768px) {
+    #score-display {
+        font-size: 20px;
+        top: 20px;
+        right: 20px;
+    }
+
+    #combo-display {
+        font-size: 40px;
+    }
+
+    .judge-text {
+        font-size: 40px !important;
+    }
+
+    .pause-content {
+        padding: 30px;
+        width: 80%;
+    }
+
+    .pause-content h2 {
+        font-size: 32px;
+        letter-spacing: 4px;
+    }
+
+    .pause-btn {
+        width: 100%;
+        font-size: 16px;
+        padding: 12px;
+    }
+}
+
 @keyframes slide-in-right {
     to {
         opacity: 1;
@@ -277,12 +587,15 @@ canvas {
 /* Combo Display - Pops in */
 #combo-display {
     position: absolute;
-    top: 45%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.5);
-    font-size: 64px;
+    top: 45% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0.5) !important;
+    font-size: 52px;
     font-weight: 900;
     font-style: italic;
+    min-width: 300px;
+    min-height: 80px;
+    pointer-events: none !important;
 
     color: #fff;
     -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
@@ -291,7 +604,12 @@ canvas {
         0 0 30px var(--secondary-glow);
 
     opacity: 0;
-    transition: opacity 0.2s, transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: opacity 0.2s, transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    /* Center text inside glass */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* FPS Display - Slides in from Top-Left */
@@ -300,8 +618,10 @@ canvas {
     top: 20px;
     left: 20px;
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.4);
-    font-family: monospace;
+    color: #fff;
+    font-family: inherit;
+    font-weight: bold;
+    min-width: 80px;
 
     opacity: 0;
     transform: translateY(-20px);
@@ -398,21 +718,27 @@ canvas {
 /* Judgment Text Styling */
 #judgment-display {
     position: absolute;
-    top: 60%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    pointer-events: none;
-    z-index: 10;
+    top: 60% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 100;
+    pointer-events: none !important;
+    min-width: 400px;
+    min-height: 120px;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .judge-text {
-    font-size: 80px;
+    font-size: 60px;
     font-weight: 900;
     font-style: italic;
     opacity: 0;
     margin: 0;
     line-height: 1;
+    text-align: center;
+    width: 100%;
 
     /* Dynamic Animation */
     animation: judge-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -551,6 +877,14 @@ canvas {
     opacity: 0;
     animation: press-flash 0.15s ease-out;
     z-index: 2;
+    pointer-events: none;
+}
+
+/* Glass-ify existing buttons */
+button:not(.key-input-btn):not(.close-settings) {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .lane-particle {
@@ -621,9 +955,10 @@ canvas {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    z-index: 1000;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 99999;
+    /* HIGHEST Priority to fix click issues */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -641,14 +976,16 @@ canvas {
 }
 
 .pause-content {
-    background: rgba(10, 16, 32, 0.9);
-    border: 2px solid rgba(0, 255, 255, 0.3);
-    border-radius: 10px;
-    padding: 50px 80px;
+    background: var(--liquid-bg) !important;
+    backdrop-filter: var(--liquid-blur) !important;
+    -webkit-backdrop-filter: var(--liquid-blur) !important;
+    border: 1px solid var(--liquid-border) !important;
+    border-radius: 20px;
+    padding: 60px 100px;
     text-align: center;
     box-shadow:
-        0 0 30px rgba(0, 255, 255, 0.2),
-        inset 0 0 50px rgba(0, 0, 0, 0.5);
+        0 8px 32px 0 rgba(0, 0, 0, 0.5),
+        inset 0 0 20px rgba(255, 255, 255, 0.05);
 }
 
 .pause-content h2 {

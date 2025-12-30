@@ -9,8 +9,8 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
     z-index: 100;
 
     /* Prevent zoom from affecting layout */
@@ -18,31 +18,39 @@
 }
 
 #main-menu h1 {
-    font-size: 80px;
+    font-family: var(--font-heading);
+    font-size: 90px;
     font-weight: 900;
     color: #fff;
     text-transform: uppercase;
-    letter-spacing: 10px;
-    margin-bottom: 50px;
+    letter-spacing: 15px;
+    margin-bottom: 60px;
     text-shadow:
-        0 0 10px #00ffff,
-        0 0 20px #00ffff,
-        0 0 40px #00ffff;
-    animation: title-pulse 2s infinite alternate;
-
-    /* Fixed size regardless of zoom */
-    min-height: 96px;
-    max-height: 96px;
-    line-height: 96px;
+        0 0 20px rgba(0, 255, 255, 0.5),
+        0 0 40px rgba(0, 255, 255, 0.3);
+    animation: title-float 6s infinite ease-in-out;
 
     /* Easter Egg Discovery */
     cursor: pointer;
-    user-select: none;
-    transition: transform 0.3s ease, text-shadow 0.3s ease;
+    transition: transform 0.3s ease;
+}
+
+@keyframes title-float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+        filter: brightness(1);
+    }
+
+    50% {
+        transform: translateY(-10px);
+        filter: brightness(1.2);
+    }
 }
 
 #main-menu h1:hover {
-    transform: scale(1.05);
+    transform: scale(1.05) translateY(-15px);
     text-shadow:
         0 0 15px #00ffff,
         0 0 30px #00ffff,
@@ -62,15 +70,15 @@
 #song-list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
     width: 60%;
     max-width: 800px;
     max-height: 70vh;
     overflow-y: auto;
-    padding-right: 10px;
-
-    /* Maintain fixed dimensions */
-    min-width: 600px;
+    padding: 20px;
+    /* Masking for smooth fade at top/bottom */
+    mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
 }
 
 /* Custom Scrollbar Styling */
@@ -94,64 +102,162 @@
 }
 
 .song-item {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 20px 30px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
+    background: var(--liquid-bg) !important;
+    backdrop-filter: var(--liquid-blur) !important;
+    -webkit-backdrop-filter: var(--liquid-blur) !important;
+    border: 1px solid var(--liquid-border) !important;
+    border-left: 4px solid var(--primary-glow) !important;
+    border-radius: 8px;
 
-    /* Zoom-resistant properties */
-    zoom: 1;
-    transform: scale(1) !important;
-    transform-origin: center;
-    min-height: 80px;
-    max-height: 80px;
+    /* Staggered entry animation */
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: item-enter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes item-enter {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Stagger logic for children */
+.song-item:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.song-item:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.song-item:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.song-item:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.song-item:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.song-item:nth-child(n+6) {
+    animation-delay: 0.3s;
 }
 
 .song-item:hover {
-    background: rgba(0, 255, 255, 0.1);
-    border-color: #00ffff;
-    transform: scale(1.02) !important;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+    background: var(--glass-highlight);
+    border-color: var(--primary-glow);
+    border-left-color: var(--primary-glow);
+    transform: translateX(10px);
+    /* Removed scale() */
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+/* Flash effect on hover */
+.song-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: 0.5s;
+}
+
+.song-item:hover::before {
+    left: 100%;
+}
+
+.song-info {
+    flex: 1;
+    min-width: 0;
+    /* Enable flex shrinkage for text overflow */
+    margin-right: 20px;
 }
 
 .song-info h2 {
     margin: 0;
-    font-size: 32px;
+    font-family: var(--font-heading);
+    font-size: 36px;
     color: #fff;
-    line-height: 38px;
-    min-height: 38px;
-    max-height: 38px;
+    line-height: 1;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .song-info p {
-    margin: 5px 0 0 0;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
+    margin: 6px 0 0 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    letter-spacing: 1px;
+    font-family: var(--font-body);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .song-difficulty {
-    font-size: 14px;
+    font-family: var(--font-heading);
+    font-size: 16px;
     font-weight: 700;
+    padding: 6px 18px;
+    border-radius: 2px;
+    letter-spacing: 2px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s;
+    text-shadow: 0 0 5px currentColor;
+}
+
+/* Difficulty Tier Colors for Menu */
+.song-difficulty.easy {
+    color: #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+    border-color: rgba(0, 255, 136, 0.3);
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.song-difficulty.normal {
     color: #00ffff;
     background: rgba(0, 255, 255, 0.1);
-    padding: 6px 15px;
-    border-radius: 20px;
-    border: 1px solid rgba(0, 255, 255, 0.3);
-    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-    line-height: normal;
-    min-height: auto;
-    max-height: auto;
-    white-space: nowrap;
+    border-color: rgba(0, 255, 255, 0.3);
+}
 
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 5;
+.song-difficulty.hard {
+    color: #ffff00;
+    background: rgba(255, 255, 0, 0.1);
+    border-color: rgba(255, 255, 0, 0.3);
+    text-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+}
+
+.song-difficulty.hell {
+    color: #ff4400;
+    background: rgba(255, 68, 0, 0.1);
+    border-color: rgba(255, 68, 0, 0.3);
+    text-shadow: 0 0 10px rgba(255, 68, 0, 0.5);
+}
+
+.song-difficulty.master {
+    color: #ff00ff;
+    background: rgba(255, 0, 255, 0.1);
+    border-color: rgba(255, 0, 255, 0.3);
+    text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+.song-difficulty.impossible {
+    color: #fff;
+    background: #ff0000;
+    border-color: #fff;
+    text-shadow: 0 0 10px #fff;
+    animation: chaos-shake 0.1s infinite;
 }
 
 .song-difficulty:hover {
@@ -177,4 +283,42 @@
 
 .song-item:hover::before {
     left: 100%;
+}
+
+/* Mobile responsiveness for Menu */
+@media (max-width: 768px) {
+    #main-menu h1 {
+        font-size: 40px;
+        letter-spacing: 5px;
+        margin-bottom: 30px;
+        min-height: auto;
+        max-height: none;
+        line-height: normal;
+    }
+
+    #song-list {
+        width: 90%;
+        min-width: 0;
+        max-height: 60vh;
+    }
+
+    .song-item {
+        padding: 15px;
+        min-height: 70px;
+        max-height: none;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .song-info h2 {
+        font-size: 20px;
+        line-height: 1.2;
+        min-height: auto;
+        max-height: none;
+    }
+
+    .song-difficulty {
+        align-self: flex-end;
+    }
 }

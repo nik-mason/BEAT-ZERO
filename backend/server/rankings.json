@@ -1,0 +1,38 @@
+{
+    "Stay": [
+        {
+            "username": "mason14",
+            "score": 444400,
+            "accuracy": "92.4",
+            "grade": "A",
+            "date": "2025-12-25 16:06"
+        }
+    ],
+    "We dont talk anymore": [
+        {
+            "username": "1234",
+            "score": 739600,
+            "accuracy": "95.5",
+            "grade": "S",
+            "date": "2025-12-25 20:03"
+        }
+    ],
+    "COMA": [
+        {
+            "username": "mason14",
+            "score": 40300,
+            "accuracy": "14.0",
+            "grade": "F",
+            "date": "2025-12-26 08:04"
+        }
+    ],
+    "Aleph-0": [
+        {
+            "username": "mason14",
+            "score": 155500,
+            "accuracy": "27.1",
+            "grade": "F",
+            "date": "2025-12-26 08:17"
+        }
+    ]
+}

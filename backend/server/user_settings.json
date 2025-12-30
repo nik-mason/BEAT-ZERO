@@ -1,0 +1,48 @@
+{
+    "mason14": {
+        "layout": {
+            "score-display": {
+                "left": "34.3359px",
+                "top": "261px",
+                "scale": 2.38,
+                "rotate": 195
+            },
+            "fps-display": {
+                "left": "1393.58px",
+                "top": "15px",
+                "scale": 5,
+                "rotate": 0
+            },
+            "lane-effect-0": {
+                "left": "1221px",
+                "top": "98px",
+                "scale": 1,
+                "rotate": 0
+            },
+            "lane-effect-1": {
+                "left": "1326px",
+                "top": "98px",
+                "scale": 1,
+                "rotate": 0
+            },
+            "lane-effect-2": {
+                "left": "1428px",
+                "top": "99px",
+                "scale": 1,
+                "rotate": 0
+            },
+            "lane-effect-3": {
+                "left": "1532px",
+                "top": "99px",
+                "scale": 1,
+                "rotate": 0
+            },
+            "key-hint-container": {
+                "left": "2176px",
+                "top": "1112px",
+                "scale": 3.06,
+                "rotate": 0
+            }
+        }
+    }
+}
